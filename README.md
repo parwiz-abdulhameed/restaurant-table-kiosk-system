@@ -1,4 +1,4 @@
-# 🍽️ Chef Istanbul Restaurant Kiosk System
+# 🍽️ Restaurant table Kiosk System
 
 A portable, modern, and lightweight **Self-Service Restaurant Kiosk & Management System** designed to provide a complete digital ordering experience for restaurants.
 
