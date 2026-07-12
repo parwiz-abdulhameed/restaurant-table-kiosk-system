@@ -82,7 +82,7 @@ cd restaurant-table-kiosk-system-main
 ## 3. Create Required Folders
 Open PowerShell inside the project directory and execute the following commands to securely generate the target directories:
 ```powershell
-mkdir public -Force
+
 mkdir public\img -Force
 mkdir public\videos -Force
 mkdir public\sounds -Force
