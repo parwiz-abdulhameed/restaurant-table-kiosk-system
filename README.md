@@ -76,7 +76,7 @@ npm -v
 ## 2. Clone Repository
 ```powershell
 git clone https://github.com
-cd restaurant-kiosk-system
+cd restaurant-table-kiosk-system-main
 ```
 
 ## 3. Create Required Folders
@@ -91,7 +91,7 @@ mkdir data -Force
 
 The proper project structure must look like this:
 ```text
-restaurant-kiosk-system/
+restaurant-table-kiosk-system-main/
 │
 ├── public/
 │   ├── admin.html
