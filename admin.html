@@ -1,0 +1,3344 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chef İstanbul | Yönetim Paneli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="/socket.io/socket.io.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    transition: background 0.25s ease, color 0.2s ease;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at 10% 20%, #0b1120, #030712);
+    color: #f8fafc;
+    --brand: #f97316;
+    --brand-dark: #ea580c;
+    --brand-glow: rgba(249,115,22,0.35);
+    --bg-glass: rgba(15, 23, 42, 0.75);
+    --card-bg: rgba(30, 41, 59, 0.65);
+    --border-light: rgba(255,255,255,0.08);
+    --text-muted: #94a3b8;
+    --danger: #f43f5e;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --card-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: rgba(128,128,128,0.2); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--brand); border-radius: 10px; }
+
+  .glass {
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-light);
+  }
+  .card-glass {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-light);
+    border-radius: 28px;
+    transition: transform 0.2s, border 0.2s, box-shadow 0.2s;
+    box-shadow: var(--card-shadow);
+  }
+  .card-glass:hover {
+    border-color: rgba(249,115,22,0.5);
+    transform: translateY(-2px);
+  }
+  .btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: rgba(128,128,128,0.1);
+    color: var(--text-muted);
+    backdrop-filter: blur(4px);
+  }
+  .btn-modern:hover { background: rgba(128,128,128,0.2); color: currentColor; transform: scale(0.96); }
+  .btn-primary { background: linear-gradient(105deg, var(--brand), var(--brand-dark)); color: white; box-shadow: 0 4px 12px var(--brand-glow); }
+  .btn-primary:hover { background: linear-gradient(105deg, var(--brand-dark), #c2410c); transform: scale(0.98); }
+  .btn-success { background: linear-gradient(105deg, #10b981, #059669); color: white; }
+  .btn-danger { background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244,63,94,0.3); }
+  .btn-danger:hover { background: #f43f5e; color: white; }
+  .input-modern {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 10px 16px;
+    color: currentColor;
+    font-size: 0.85rem;
+    outline: none;
+    width: 100%;
+  }
+  .input-modern:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.8rem;
+    margin-top: 0.8rem;
+  }
+  .cat-card {
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(8px);
+    border-radius: 32px;
+    overflow: hidden;
+    transition: all 0.3s;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 12px 24px -12px rgba(0,0,0,0.3);
+  }
+  .cat-card:hover { transform: translateY(-6px); border-color: var(--brand); }
+  .cat-card-image {
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cat-card-image .icon-bg {
+    font-size: 4rem;
+    color: rgba(255,255,255,0.8);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .cat-card-content { padding: 1rem 1.2rem 1.2rem; }
+  .cat-card-name {
+    font-weight: 800;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cat-card-actions { display: flex; gap: 12px; margin-top: 12px; }
+  .cat-edit-btn, .cat-delete-btn {
+    background: rgba(128,128,128,0.15);
+    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: var(--text-muted);
+  }
+  .cat-edit-btn:hover { background: var(--brand); color: white; transform: scale(1.05); }
+  .cat-delete-btn:hover { background: var(--danger); color: white; transform: scale(1.05); }
+  .img-preview {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 20px;
+    margin-top: 8px;
+    border: 1px solid var(--border-light);
+  }
+  .video-preview {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.4);
+    padding: 4px 10px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+  .page-btn {
+    background: rgba(128,128,128,0.15);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .page-btn.active { background: var(--brand); color: white; }
+  .badge-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .status-busy { background: rgba(244,63,94,0.25); color: #f87171; border-color: #f87171; }
+  .status-free { background: rgba(16,185,129,0.2); color: #34d399; border-color: #34d399; }
+  .order-modern {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-light);
+    border-radius: 28px;
+    position: relative;
+  }
+  .order-modern:hover { transform: translateY(-2px); border-color: var(--brand); }
+  .order-checkbox-wrapper {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+  }
+  .order-checkbox-wrapper input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--brand);
+  }
+  .product-row {
+    background: rgba(0,0,0,0.2);
+    border-radius: 20px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .modal-glass {
+    background: var(--bg-glass);
+    backdrop-filter: blur(28px);
+    border-radius: 32px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+    animation: modalFadeIn 0.25s ease-out;
+  }
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .nav-item-modern {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    margin: 4px 12px;
+    border-radius: 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  .nav-item-modern:hover { background: rgba(255,255,255,0.08); color: currentColor; }
+  .nav-item-modern.active {
+    background: linear-gradient(95deg, rgba(249,115,22,0.2), rgba(249,115,22,0.05));
+    color: var(--brand);
+    border-left: 3px solid var(--brand);
+  }
+  .theme-btn {
+    background: rgba(255,255,255,0.1);
+    border-radius: 40px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 1.2rem;
+  }
+  .hidden { display: none; }
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 80px));
+    gap: 12px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 8px;
+    margin-top: 12px;
+    border-radius: 24px;
+    background: rgba(128,128,128,0.05);
+  }
+  .icon-grid-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 20px;
+    background: rgba(128,128,128,0.08);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    font-size: 1.8rem;
+    backdrop-filter: blur(4px);
+    border: 1px solid transparent;
+  }
+  .icon-grid-item:hover {
+    transform: scale(1.08);
+    background: rgba(249,115,22,0.2);
+    border-color: var(--brand);
+    box-shadow: 0 8px 20px rgba(249,115,22,0.3);
+  }
+  .icon-grid-item.selected {
+    background: var(--brand);
+    color: white;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 8px 20px rgba(249,115,22,0.5);
+    transform: scale(1.02);
+  }
+  .animate-in { animation: fadeSlideUp 0.3s ease-out; }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #334155;
+    transition: 0.3s;
+    border-radius: 34px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--brand); }
+  input:checked + .slider:before { transform: translateX(26px); }
+  .waiter-call-item {
+    background: rgba(0,0,0,0.25);
+    border-radius: 24px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+    border-left: 4px solid var(--brand);
+  }
+  .waiter-call-item:hover { background: rgba(0,0,0,0.4); transform: translateX(4px); }
+  .waiter-call-info .table-name { font-weight: 800; font-size: 1rem; }
+  .waiter-call-info .time { font-size: 0.7rem; color: var(--text-muted); }
+  .resolve-call-btn {
+    background: rgba(16,185,129,0.2);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 30px;
+    color: #10b981;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .resolve-call-btn:hover { background: #10b981; color: white; transform: scale(1.05); }
+  .sales-table-wrapper {
+    overflow-x: auto;
+    border-radius: 20px;
+  }
+  .sales-table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .sales-table-wrapper th, .sales-table-wrapper td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .sales-table-wrapper th {
+    font-weight: 700;
+    background: rgba(0,0,0,0.2);
+    color: var(--text-muted);
+  }
+  .sales-table-wrapper tr:hover td {
+    background: rgba(255,255,255,0.03);
+  }
+  #orders-table table th,
+  #orders-table table td {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    vertical-align: middle;
+    padding: 10px 12px;
+  }
+  #orders-table table tr:last-child td {
+    border-bottom: none;
+  }
+  @media print {
+    body * { visibility: hidden; }
+    #printable-report, #printable-report * { visibility: visible; }
+    #printable-report {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px;
+      background: white;
+      color: black;
+    }
+    .btn-modern, .nav-item-modern, .glass, .card-glass, .modal-bg {
+      display: none !important;
+    }
+    .stats-grid-print {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card-print {
+      border: 1px solid #ccc;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  }
+  .dropzone {
+    border: 2px dashed rgba(249,115,22,0.5);
+    border-radius: 24px;
+    padding: 24px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(128,128,128,0.05);
+  }
+  .dropzone:hover {
+    border-color: var(--brand);
+    background: rgba(249,115,22,0.05);
+  }
+  .dropzone.dragover {
+    border-color: var(--brand);
+    background: rgba(249,115,22,0.1);
+  }
+  .media-preview {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: rgba(0,0,0,0.2);
+    padding: 12px;
+    border-radius: 20px;
+  }
+  .media-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+  .media-preview .video-badge {
+    background: rgba(0,0,0,0.5);
+    padding: 6px 12px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+  }
+  .pdf-report-container {
+    background: white;
+    color: #1e293b;
+    padding: 30px;
+    font-family: 'Inter', sans-serif;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .pdf-report-container h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #0f172a;
+    border-bottom: 3px solid #f97316;
+    padding-bottom: 12px;
+  }
+  .pdf-report-container .subtitle {
+    color: #64748b;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .pdf-report-container .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .pdf-report-container .stat-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+  }
+  .pdf-report-container .stat-card .label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pdf-report-container .stat-card .value {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .pdf-report-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+  .pdf-report-container table th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .pdf-report-container table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .pdf-report-container table tr:last-child td {
+    border-bottom: none;
+  }
+  .pdf-report-container .footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .cat-modal-content {
+    max-width: 560px;
+    width: 90%;
+    padding: 0;
+    overflow: hidden;
+  }
+  .cat-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cat-modal-header h3 {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .cat-modal-close {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cat-modal-close:hover {
+    background: rgba(244,63,94,0.2);
+    color: var(--danger);
+  }
+  .cat-modal-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .cat-modal-footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  .cat-modal-footer .btn-modern {
+    padding: 10px 28px;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<div id="notif-overlay" class="modal-bg" style="display: flex;">
+  <div class="modal-glass" style="max-width:360px;width:90%;padding:32px 24px;text-align:center;">
+    <div style="font-size:56px;margin-bottom:16px">🔊</div>
+    <h2 style="font-size:20px;font-weight:800">Sesli Bildirimler</h2>
+    <p style="color:var(--text-muted);margin:12px 0 24px">Yeni siparişleri ve garson çağrılarını duymak için izin verin.</p>
+    <button onclick="unlockAudio()" class="btn-modern btn-primary" style="width:100%;padding:12px;justify-content:center;">🎧 Paneli Başlat</button>
+  </div>
+</div>
+
+<div id="app" style="display:flex;flex-direction:column;height:100vh">
+  <div class="glass" style="flex-shrink:0;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-light);z-index:30;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div id="logoContainer" style="width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 16px rgba(0,0,0,0.2);">
+        <span class="text-3xl font-bold text-orange-500">C</span>
+      </div>
+      <span style="font-weight:800;font-size:1.2rem;">
+        <span id="dynamicRestoName">Chef İstanbul</span> 
+        <span style="color:var(--brand);">| Admin</span>
+      </span>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <div id="conn-dot" style="width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></div>
+      <span id="tb-ip" style="font-family:monospace;font-size:0.7rem;color:var(--text-muted);"></span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <div id="sidebar" style="width:260px;flex-shrink:0;background:rgba(5,10,25,0.5);backdrop-filter:blur(20px);border-right:1px solid var(--border-light);overflow-y:auto;padding:16px 0;display:flex;flex-direction:column;justify-content:space-between;">
+      <nav>
+        <div class="nav-item-modern active" onclick="goto('orders')" id="nav-orders"><i class="fa fa-receipt"></i> Siparişler<span id="order-badge" style="margin-left:auto;background:var(--brand);border-radius:40px;padding:1px 8px;font-size:10px;display:none;"></span></div>
+        <div class="nav-item-modern" onclick="goto('categories')" id="nav-categories"><i class="fa fa-tags"></i> Kategoriler</div>
+        <div class="nav-item-modern" onclick="goto('menu')" id="nav-menu"><i class="fa fa-utensils"></i> Menü & Ürünler</div>
+        <div class="nav-item-modern" onclick="goto('tables')" id="nav-tables"><i class="fa fa-chair"></i> Masalar</div>
+        <div class="nav-item-modern" onclick="goto('sales')" id="nav-sales"><i class="fa fa-chart-line"></i> Satışlar</div>
+        <div class="nav-item-modern" onclick="goto('settings')" id="nav-settings"><i class="fa fa-gear"></i>Kiosk Ayarları</div>
+        <div class="nav-item-modern" onclick="goto('featured')" id="nav-featured"><i class="fa fa-star"></i> Ek Menü</div>
+        <div class="nav-item-modern" onclick="goto('waiter')" id="nav-waiter">
+          <i class="fa fa-bell"></i> Garson Çağrıları
+          <span id="waiter-badge" style="margin-left:auto;background:var(--brand);border-radius:40px;padding:1px 8px;font-size:10px;display:none;"></span>
+        </div>
+        <div class="nav-item-modern" onclick="goto('site-settings')" id="nav-site-settings"><i class="fa fa-sliders-h"></i> Site Ayarları</div>
+      </nav>
+      <div style="padding:16px 20px; margin-top: auto;">
+        <button onclick="logout()" class="btn-modern btn-danger w-full" style="justify-content: center; width: 100%;"><i class="fa fa-sign-out-alt"></i> Çıkış Yap</button>
+      </div>
+      <div id="adminFooterDiv" style="padding:16px 20px;border-top:1px solid var(--border-light);font-size:10px;color:var(--text-muted);text-align:center;"></div>
+    </div>
+
+    <div id="content" style="flex:1;overflow-y:auto;padding:24px 28px;">
+      <section id="sec-orders" style="display:block;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <h2 style="font-size:1.5rem;font-weight:800;">📋 Canlı Siparişler</h2>
+          <div class="flex gap-2">
+            <button class="btn-modern btn-primary" id="f-pending" onclick="loadOrders('pending')">⏳ Bekleyen</button>
+            <button class="btn-modern" id="f-accepted" onclick="loadOrders('accepted')">✅ Teslim Edilenler</button>
+            <button class="btn-modern" id="f-all" onclick="loadOrders('all')">📋 Tümü</button>
+          </div>
+        </div>
+        <div id="banner" class="glass" style="display:none;margin-bottom:20px;padding:12px 20px;border-radius:20px;border-left:4px solid var(--brand);"><i class="fa fa-bell fa-beat"></i> <span id="banner-txt"></span></div>
+        
+        <div id="accepted-controls" style="display: none; justify-content: flex-end; gap: 12px; margin-bottom: 20px;">
+          <button id="enableAcceptedSelectBtn" class="btn-modern btn-primary"><i class="fa fa-check-square"></i> Seç</button>
+          <button id="cancelAcceptedSelectBtn" class="btn-modern" style="display:none;"><i class="fa fa-times"></i> Vazgeç</button>
+          <button id="selectAllAcceptedBtn" class="btn-modern" style="display:none;"><i class="fa fa-check-double"></i> Tümünü Seç</button>
+          <button id="deleteSelectedAcceptedBtn" class="btn-modern btn-danger" style="display:none;"><i class="fa fa-trash"></i> Seçilenleri Sil</button>
+        </div>
+
+        <div id="orders-list" style="display:flex;flex-direction:column;gap:16px;"></div>
+        <div id="accepted-pagination" class="pagination mt-6" style="display:none;"></div>
+        
+        <div id="orders-table-container" style="display:none;">
+          <div class="card-glass p-5">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold">Tüm Siparişler</h3>
+              <div class="flex gap-2">
+                <button id="enableSelectModeBtn" class="btn-modern btn-primary"><i class="fa fa-check-square"></i> Seç</button>
+                <button id="cancelSelectModeBtn" class="btn-modern" style="display:none;"><i class="fa fa-times"></i> Vazgeç</button>
+                <button id="selectAllOrdersBtn" class="btn-modern" style="display:none;"><i class="fa fa-check-double"></i> Tümünü Seç</button>
+                <button id="deleteSelectedOrdersBtn" class="btn-modern btn-danger" style="display:none;"><i class="fa fa-trash"></i> Seçilenleri Sil</button>
+              </div>
+            </div>
+            <div class="sales-table-wrapper" id="orders-table-wrapper">
+              <div id="orders-table"></div>
+            </div>
+            <div id="orders-pagination" class="pagination mt-6"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-categories" style="display:none;">
+        <div class="card-glass" style="padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h3 style="font-weight:800; font-size:1.3rem; background: linear-gradient(135deg, var(--brand), #facc15); background-clip: text; -webkit-background-clip: text; color: transparent;"><i class="fa fa-tags"></i> Kategoriler</h3>
+              <p style="color:var(--text-muted); font-size:0.75rem;">Görsel yükleyerek şık kartlar oluşturun, sayfalama ile gezinin</p>
+            </div>
+            <button onclick="openCatModal()" class="btn-modern btn-primary" style="gap:10px;"><i class="fa fa-plus-circle"></i> Yeni Kategori</button>
+          </div>
+          <div id="cat-list" class="cat-grid"></div>
+          <div id="cat-pagination" class="pagination"></div>
+        </div>
+      </section>
+
+      <section id="sec-menu" style="display:none;">
+        <div class="card-glass" style="padding:22px;margin-bottom:24px;">
+          <h3 id="prod-form-title" style="font-weight:700;margin-bottom:18px;">✨ Yeni Ürün</h3>
+          <input type="hidden" id="pe-id">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">
+            <div><label class="text-xs text-muted block mb-1">Ürün Adı *</label><input class="input-modern" id="pe-name" placeholder="Ör: Classic Burger"></div>
+            <div><label class="text-xs text-muted block mb-1">Fiyat (₺)</label><input class="input-modern" id="pe-price" type="number" step="0.01"></div>
+            <div><label class="text-xs text-muted block mb-1">Maliyet</label><input class="input-modern" id="pe-cost" type="number" step="0.01"></div>
+            <div><label class="text-xs text-muted block mb-1">Kategori</label><select id="pe-cat" class="input-modern"></select></div>
+            <div><label class="text-xs text-muted block mb-1">Açıklama</label><input class="input-modern" id="pe-desc" placeholder="Lezzetli..."></div>
+            <div><label class="text-xs text-muted block mb-1">Görsel</label><input type="file" id="pe-img" accept="image/*" class="text-sm"><div id="pe-img-prev" class="mt-2"></div></div>
+          </div>
+          <div class="flex items-center gap-4 my-4"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="pe-avail" checked> Satışta</label></div>
+          <div class="flex gap-3"><button onclick="saveProd()" class="btn-modern btn-primary"><i class="fa fa-save"></i> Kaydet</button><button onclick="cancelProd()" class="btn-modern">İptal</button></div>
+        </div>
+        <div class="card-glass" style="padding:22px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;"><h3 style="font-weight:700;">📦 Tüm Ürünler</h3><select id="prod-filter-cat" class="input-modern" style="width:auto;" onchange="loadProds()"></select></div>
+          <div id="prod-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+          <div id="products-pagination" class="pagination mt-6"></div>
+        </div>
+      </section>
+
+      <section id="sec-tables" style="display:none;">
+        <div class="card-glass" style="padding:22px;max-width:500px;margin-bottom:24px;"><h3 class="font-bold mb-3">Yeni Masa Ekle</h3><div class="flex gap-3"><input id="tbl-name" class="input-modern flex-1" placeholder="Örn: Masa 5"><button onclick="addTable()" class="btn-modern btn-primary"><i class="fa fa-plus"></i> Ekle</button></div></div>
+        <div class="card-glass" style="padding:22px;"><h3 class="font-bold mb-4">Masalar</h3><div id="tables-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div></div>
+        <div id="tables-pagination" class="pagination mt-6"></div>
+      </section>
+      
+      <section id="sec-sales" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+          <h2 class="text-2xl font-extrabold">📊 Satış Analizi</h2>
+          <button onclick="exportSalesToPDF()" class="btn-modern btn-primary"><i class="fa fa-print"></i> Yazdır / PDF</button>
+        </div>
+        <div id="printable-report" style="background: inherit;">
+          <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8"></div>
+          <div class="card-glass p-5">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold">Son İşlemler</h3>
+              <div class="flex gap-2">
+                <button id="enableSalesSelectModeBtn" class="btn-modern btn-primary"><i class="fa fa-check-square"></i> Seç</button>
+                <button id="cancelSalesSelectModeBtn" class="btn-modern" style="display:none;"><i class="fa fa-times"></i> Vazgeç</button>
+                <button id="selectAllSalesBtn" class="btn-modern" style="display:none;"><i class="fa fa-check-double"></i> Tümünü Seç</button>
+                <button id="deleteSelectedSalesBtn" class="btn-modern btn-danger" style="display:none;"><i class="fa fa-trash"></i> Seçilenleri Sil</button>
+              </div>
+            </div>
+            <div class="sales-table-wrapper" id="sales-table-wrapper">
+              <div id="sales-table"></div>
+            </div>
+            <div id="sales-pagination" class="pagination mt-6"></div>
+          </div>
+        </div>
+      </section>
+      
+      <section id="sec-settings" style="display:none;">
+        <h2 class="text-2xl font-extrabold mb-5">⚙️ Kiosk Ayarları</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card-glass p-5">
+            <h3 class="font-bold mb-3 text-brand"><i class="fa fa-store"></i> Restoran Bilgileri (Kiosk)</h3>
+            <div class="space-y-3">
+              <div><label class="text-xs text-muted">Restoran Adı</label><input id="s-name" class="input-modern"></div>
+              <div><label class="text-xs text-muted">Slogan</label><textarea id="s-slogan" rows="2" class="input-modern"></textarea></div>
+              <div><label class="text-xs text-muted">Footer Metni (Menü Altı)</label><input id="s-footer" class="input-modern"></div>
+              <div><label class="text-xs text-muted">Açılış Sayfası Footer</label><input id="s-welcome-footer" class="input-modern" placeholder="Chef İstanbul © 2026"></div>
+              <div>
+                <label class="text-xs text-muted">Kiosk Logosu</label>
+                <div id="logoDropzone" class="dropzone">
+                  <i class="fa-solid fa-cloud-upload-alt fa-2x mb-2"></i>
+                  <p>Logo için sürükle-bırak veya tıkla</p>
+                  <input type="file" id="s-logo" accept="image/*" style="display:none;">
+                </div>
+                <div id="s-logo-prev" class="media-preview" style="display:none;"></div>
+                <button id="removeLogoBtn" class="btn-modern btn-danger mt-2" style="display:none;" onclick="removeMedia('restaurant_logo', 's-logo-prev', 'logoDropzone')">Logoyu Kaldır</button>
+              </div>
+            </div>
+            <button onclick="saveRestaurantSettings()" class="btn-modern btn-primary mt-4 w-full"><i class="fa fa-save"></i> Restoran Bilgilerini Kaydet</button>
+          </div>
+
+          <div class="card-glass p-5">
+            <h3 class="font-bold mb-3 text-brand"><i class="fa fa-palette"></i> Kiosk Görünüm</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div><label class="text-xs text-muted">Arka Plan Rengi</label><input type="color" id="s-bg-color" class="input-modern h-10"></div>
+              <div><label class="text-xs text-muted">Buton Rengi</label><input type="color" id="s-btn-color" class="input-modern h-10"></div>
+            </div>
+            <div class="mb-4">
+              <label class="text-xs text-muted mb-2 block">Arka Plan Medyası (Video öncelikli)</label>
+              <div id="bgMediaDropzone" class="dropzone">
+                <i class="fa-solid fa-cloud-upload-alt fa-2x mb-2"></i>
+                <p>Arka plan için video (MP4) veya resim sürükle-bırak</p>
+                <input type="file" id="s-bg-media" accept="image/*,video/mp4,video/webm" style="display:none;">
+              </div>
+              <div id="bgMediaPreview" class="media-preview" style="display:none;"></div>
+              <button id="removeBgMediaBtn" class="btn-modern btn-danger mt-2" style="display:none;" onclick="removeBgMedia()">Arka Plan Medyasını Kaldır</button>
+            </div>
+            <div class="mb-4">
+              <label class="text-xs text-muted">Ekran Koruyucu Videosu</label>
+              <div id="screensaverDropzone" class="dropzone">
+                <i class="fa-solid fa-cloud-upload-alt fa-2x mb-2"></i>
+                <p>Sürükle-bırak veya tıkla (MP4, WebM)</p>
+                <input type="file" id="s-screensaver-video" accept="video/mp4,video/webm" style="display:none;">
+              </div>
+              <div id="s-screensaver-preview" class="media-preview" style="display:none;"></div>
+              <button id="removeScreensaverBtn" class="btn-modern btn-danger mt-2" style="display:none;" onclick="removeMedia('kiosk_screensaver_video', 's-screensaver-preview', 'screensaverDropzone')">Videoyu Kaldır</button>
+            </div>
+            <div class="mb-4">
+              <label class="text-xs text-muted">Ekran Koruyucu Süresi (saniye)</label>
+              <input id="s-screensaver-timeout" type="number" class="input-modern" min="10" step="5">
+            </div>
+            <button onclick="saveAppearanceSettings()" class="btn-modern btn-primary mt-4 w-full"><i class="fa fa-paintbrush"></i> Görünüm Ayarlarını Kaydet</button>
+          </div>
+
+          <div class="card-glass p-5">
+            <h3 class="font-bold mb-3 text-brand"><i class="fa fa-bell"></i> Bildirim Sesleri</h3>
+            <div class="flex items-center justify-between mb-2">
+              <span>Sesli Bildirim</span>
+              <div class="flex items-center gap-3">
+                <span id="soundStatusText" class="text-xs px-2 py-1 rounded-full bg-white/10">Açık</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="snd-on">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="text-xs text-muted block mb-1">Ses Seviyesi <span id="vol-val">80%</span></label>
+              <input type="range" id="snd-vol" min="0" max="1" step="0.05" value="0.8" class="w-full" oninput="updateVolumeAndPreview(this.value)">
+            </div>
+            <div id="sound-list" class="mt-4 flex flex-wrap gap-2 justify-center"></div>
+            <button onclick="saveSoundSettings()" class="btn-modern btn-primary mt-4 w-full"><i class="fa fa-save"></i> Ses Ayarlarını Kaydet</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-featured" style="display:none;">
+        <div class="card-glass" style="padding:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div>
+                <h3 style="font-weight:800; font-size:1.3rem; background: linear-gradient(135deg, var(--brand), #facc15); background-clip: text; -webkit-background-clip: text; color: transparent;">
+                  <i class="fa fa-fire"></i> <span id="featuredTitleDisplay">Ek Menü Yönetimi</span>
+                </h3>
+                <p style="color:var(--text-muted); font-size:0.75rem;">Burada ekleyeceğiniz ürünler Kiosk'ta "Öne Çıkanlar" bölümünde listelenir.</p>
+              </div>
+              <div class="flex gap-2 items-center">
+                <input type="text" id="featuredTitleInput" class="input-modern w-48" placeholder="Öne Çıkanlar Başlığı">
+                <button onclick="updateFeaturedTitle()" class="btn-modern btn-primary"><i class="fa fa-save"></i> Başlığı Güncelle</button>
+              </div>
+            </div>
+            <button onclick="openFeaturedModal()" class="btn-modern btn-primary" style="gap:10px;"><i class="fa fa-plus-circle"></i> Yeni Ürün Ekle</button>
+          </div>
+          <div id="featured-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+          <div id="featured-pagination" class="pagination"></div>
+        </div>
+      </section>
+
+      <section id="sec-waiter" style="display:none;">
+        <div class="card-glass" style="padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h3 style="font-weight:800; font-size:1.3rem; background: linear-gradient(135deg, var(--brand), #facc15); background-clip: text; -webkit-background-clip: text; color: transparent;">
+                <i class="fa fa-bell"></i> Garson Çağrıları
+              </h3>
+              <p style="color:var(--text-muted); font-size:0.75rem;">Müşterilerden gelen anlık çağrılar ve masa bilgileri.</p>
+            </div>
+            <button onclick="loadWaiterCalls()" class="btn-modern" style="gap:8px;"><i class="fa fa-refresh"></i> Yenile</button>
+          </div>
+          <div id="waiter-calls-list" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="text-center text-muted py-8">Yükleniyor...</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-site-settings" style="display:none;">
+        <h2 class="text-2xl font-extrabold mb-6"><i class="fa fa-sliders-h mr-2 text-orange-500"></i> Site Ayarları (Admin Paneli)</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card-glass p-5">
+            <h3 class="font-bold mb-4 text-brand"><i class="fa fa-image"></i> Admin Görünümü</h3>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Admin Logosu</label>
+              <div id="adminLogoDropzone" class="dropzone">
+                <i class="fa-solid fa-cloud-upload-alt fa-2x mb-2"></i>
+                <p>Logo sürükle-bırak veya tıkla (max 2MB)</p>
+                <input type="file" id="adminLogoInput" accept="image/*" style="display:none;">
+              </div>
+              <div id="adminLogoPreview" class="mt-3 flex justify-center"></div>
+              <button id="removeAdminLogoBtn" class="btn-modern btn-danger mt-2 w-full" style="display:none;" onclick="removeAdminLogo()">Logoyu Kaldır</button>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-semibold mb-2">Admin Başlığı (Üst Çubuk)</label>
+              <input type="text" id="adminTitle" class="input-modern" placeholder="Örn: Chef İstanbul">
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-semibold mb-2">Admin Alt Bilgi Metni (Footer)</label>
+              <input type="text" id="adminFooterText" class="input-modern" placeholder="Tüm hakları saklıdır© 2026">
+              <p class="text-xs text-muted mt-1">Bu metin sidebar'ın alt kısmında görünecektir. Boş bırakırsanız gösterilmez.</p>
+            </div>
+            <button id="saveAdminAppearanceBtn" class="btn-modern btn-primary mt-4 w-full"><i class="fa fa-save"></i> Logo & Başlık & Footer Kaydet</button>
+          </div>
+
+          <div class="card-glass p-5">
+            <h3 class="font-bold mb-4 text-brand"><i class="fa fa-paintbrush"></i> Admin Arka Planı</h3>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Arka Plan Rengi</label>
+              <div class="flex gap-3 items-center">
+                <input type="color" id="adminBgColor" class="input-modern h-10 flex-1">
+                <button id="resetAdminBgBtn" class="btn-modern">Sıfırla</button>
+              </div>
+              <p class="text-xs text-muted mt-1">Renk değiştiğinde otomatik kaydedilir. Video yüklüyken renk altta kalır, üstte video hafif saydam gözükür.</p>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-semibold mb-2">Arka Plan Medyası (Video veya Resim)</label>
+              <div id="adminBgMediaDropzone" class="dropzone">
+                <i class="fa-solid fa-cloud-upload-alt fa-2x mb-2"></i>
+                <p>Video (MP4/WebM) veya resim sürükle-bırak (max 500MB)</p>
+                <input type="file" id="adminBgMediaInput" accept="image/*,video/mp4,video/webm" style="display:none;">
+              </div>
+              <div id="adminBgMediaPreview" class="media-preview" style="display:none;"></div>
+              <button id="removeAdminBgMediaBtn" class="btn-modern btn-danger mt-2 w-full" style="display:none;" onclick="removeAdminBgMedia()">Medyayı Kaldır</button>
+              <button id="saveAdminBgMediaBtn" class="btn-modern btn-primary mt-2 w-full"><i class="fa fa-save"></i> Medyayı Kaydet</button>
+              <p class="text-xs text-muted mt-1">Video yüklendiğinde arka plan rengi silinmez, videoya saydamlık uygulanır.</p>
+            </div>
+          </div>
+
+          <div class="card-glass p-5 lg:col-span-2">
+            <h3 class="font-bold mb-4 text-brand"><i class="fa fa-user-cog"></i> Hesap Ayarları</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              <div class="flex flex-col h-full justify-between">
+                <div>
+                  <label class="block text-sm font-semibold mb-2">Kullanıcı Adı Değiştir</label>
+                  <div class="flex flex-col gap-3">
+                    <input type="text" id="newUsername" class="input-modern" placeholder="Yeni kullanıcı adı">
+                    <input type="password" id="usernamePassword" class="input-modern" placeholder="Şifre">
+                  </div>
+                </div>
+                <button id="changeUsernameBtn" class="btn-modern btn-primary mt-3 w-full">Kullanıcı Adını Güncelle</button>
+                <div id="usernameMsg" class="text-sm mt-2"></div>
+              </div>
+              <div class="flex flex-col h-full justify-between">
+                <div>
+                  <label class="block text-sm font-semibold mb-2">Şifre Değiştir</label>
+                  <div class="flex flex-col gap-3">
+                    <input type="password" id="oldPass" class="input-modern" placeholder="Eski şifre">
+                    <input type="password" id="newPass" class="input-modern" placeholder="Yeni şifre">
+                    <input type="password" id="confirmPass" class="input-modern" placeholder="Yeni şifre (tekrar)">
+                  </div>
+                </div>
+                <button id="changePasswordBtn" class="btn-modern btn-primary mt-3 w-full">Şifreyi Güncelle</button>
+                <div id="passwordMsg" class="text-sm mt-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- KATEGORİ MODAL -->
+<div id="cat-modal" class="modal-bg">
+  <div class="modal-glass cat-modal-content">
+    <div class="cat-modal-header">
+      <h3 id="cat-modal-title">Kategori Düzenle / Ekle</h3>
+      <button class="cat-modal-close" onclick="closeCatModal()">&times;</button>
+    </div>
+    <div class="cat-modal-body">
+      <input type="hidden" id="cm-id">
+      <div class="mb-4">
+        <label class="text-xs text-muted block mb-1">Kategori Adı *</label>
+        <input id="cm-name" class="input-modern" placeholder="Kategori adı girin">
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="text-xs text-muted block mb-1">Renk (ikon arka plan)</label>
+          <input type="color" id="cm-color" class="input-modern h-10">
+        </div>
+        <div>
+          <label class="text-xs text-muted block mb-1">Kategori Görseli</label>
+          <input type="file" id="cm-img" accept="image/*" class="text-sm w-full">
+          <div id="cm-img-preview" class="mt-2"></div>
+          <button id="remove-cat-img-btn" class="btn-modern btn-danger mt-2 text-xs" style="display:none;" onclick="removeCatImage()">🗑️ Görseli Kaldır</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-muted block mb-1">İkon Seç (görsel yoksa gösterilir)</label>
+        <div id="icon-grid" class="icon-grid" style="max-height:200px;"></div>
+        <input type="hidden" id="cm-icon">
+      </div>
+    </div>
+    <div class="cat-modal-footer">
+      <button onclick="closeCatModal()" class="btn-modern">İptal</button>
+      <button onclick="saveCat()" class="btn-modern btn-primary"><i class="fa fa-save"></i> Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div id="tab-modal" class="modal-bg"><div class="modal-glass" style="max-width:500px;"><div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;"><h3 id="tab-title" class="font-bold">Adisyon</h3><button onclick="closeTabModal()" class="text-muted text-2xl">&times;</button></div><div id="tab-body" style="padding:16px;max-height:50vh;overflow-y:auto;"></div><div id="tab-footer" style="padding:16px;"></div></div></div>
+<div id="pay-modal" class="modal-bg"><div class="modal-glass" style="max-width:450px;"><div style="padding:20px;"><h3 class="font-bold">Hesap Kapat</h3></div><div id="pay-summary" style="padding:16px;"></div><div class="px-4 pb-4"><label>Ödeme Tipi</label><div class="flex gap-3 mt-2"><label><input type="radio" name="pay-type" value="cash" checked> Nakit</label><label><input type="radio" name="pay-type" value="card"> Kredi Kartı</label></div><button onclick="confirmPayment()" class="btn-modern btn-success w-full mt-4">Ödemeyi Onayla & Kapat</button></div><div class="p-3 text-center"><button onclick="closePayModal()" class="btn-modern">İptal</button></div></div></div>
+<div id="receipt-modal" class="modal-bg"><div class="modal-glass" style="max-width:380px;"><div style="padding:20px;"><h3 class="font-bold">Dijital Fiş</h3></div><div id="receipt-body" style="padding:20px;"></div><div style="padding:16px;display:flex;gap:8px;"><button onclick="printReceipt()" class="btn-modern btn-primary flex-1">Yazdır</button><button onclick="document.getElementById('receipt-modal').style.display='none'" class="btn-modern">Kapat</button></div></div></div>
+
+<div id="featured-modal" class="modal-bg">
+  <div class="modal-glass" style="max-width:600px;width:90%;">
+    <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;">
+      <h3 class="font-bold">Ek Menü Ürünü</h3>
+      <button onclick="closeFeaturedModal()" class="text-muted text-2xl">&times;</button>
+    </div>
+    <div style="padding:20px;">
+      <input type="hidden" id="fm-id">
+      <div><label class="text-xs text-muted">Ürün Adı *</label><input id="fm-name" class="input-modern"></div>
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <div><label class="text-xs text-muted">Fiyat (₺)</label><input id="fm-price" type="number" step="0.01" class="input-modern"></div>
+        <div><label class="text-xs text-muted">Sıralama</label><input id="fm-sort" type="number" class="input-modern" value="0"></div>
+      </div>
+      <div class="mt-3"><label class="text-xs text-muted">Açıklama</label><textarea id="fm-desc" rows="2" class="input-modern"></textarea></div>
+      <div class="mt-3"><label class="text-xs text-muted">Görsel</label><input type="file" id="fm-img" accept="image/*"><div id="fm-img-preview" class="mt-2"></div><button id="remove-featured-img-btn" class="btn-modern btn-danger mt-2" style="display:none;" onclick="removeFeaturedImage()">Görseli Kaldır</button></div>
+    </div>
+    <div style="padding:20px;display:flex;gap:12px;">
+      <button onclick="saveFeaturedItem()" class="btn-modern btn-primary flex-1">Kaydet</button>
+      <button onclick="closeFeaturedModal()" class="btn-modern">İptal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========== GÜVENLİK: GİRİŞ KONTROLÜ (EN ÜSTTE ÇALIŞIR) ==========
+  const token = localStorage.getItem('admin_token');
+  // Eğer token yoksa direkt login sayfasına yönlendir
+  if (!token && window.location.pathname === '/admin') {
+    window.location.href = '/login';
+  }
+
+  // fetch intercept: token ekle ve 401'de login'e yönlendir
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    const isPublic = url.includes('/api/auth/') || url.includes('/api/settings');
+    if (!isPublic && token) {
+      options.headers = options.headers || {};
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return originalFetch(url, options).then(response => {
+      if (response.status === 401) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/login';
+        throw new Error('Oturum süresi doldu');
+      }
+      return response;
+    });
+  };
+
+  const socket = io();
+  let orderFilter = 'pending', pendingCount = 0, currentTabTableId = null, currentPayTableId = null;
+  let audioCtx = null, soundSettings = { on: true, vol: 0.8, snd: 'default', customUrl: '' };
+  let tempSelectedSound = 'default';
+  let cats = [];
+  let currentCatPage = 1;
+  const itemsPerPage = 30;
+  const ICONS = ['fa-utensils','fa-burger','fa-pizza-slice','fa-hotdog','fa-fish','fa-egg','fa-bread-slice','fa-drumstick-bite','fa-cheese','fa-carrot','fa-leaf','fa-seedling','fa-apple-whole','fa-lemon','fa-pepper-hot','fa-ice-cream','fa-cake-candles','fa-cookie','fa-mug-hot','fa-wine-glass','fa-coffee','fa-cocktail','fa-bowl-food','fa-shrimp','fa-spa'];
+  
+  let productMap = new Map();
+  let allOrders = [];
+
+  let featuredItems = [];
+  let currentFeaturedPage = 1;
+  const featuredPerPage = 30;
+
+  let waiterCalls = [];
+  
+  let allProductsList = [];
+  let currentProductsPage = 1;
+  const productsPerPage = 30;
+
+  let allSalesList = [];
+  let currentSalesPage = 1;
+  const salesPerPage = 30;
+  let selectedSalesIds = new Set();
+  let salesSelectMode = false;
+
+  let allOrdersList = [];
+  let currentOrdersPage = 1;
+  const ordersPerPage = 30;
+  let selectedOrderIds = new Set();
+  let ordersSelectMode = false;
+
+  let acceptedSelectMode = false;
+  let selectedAcceptedIds = new Set();
+
+  let allTablesList = [];
+  let currentTablesPage = 1;
+  const tablesPerPage = 30;
+
+  let tempAdminBgFile = null;
+  
+  let acceptedOrdersList = [];
+  let currentAcceptedPage = 1;
+  const acceptedPerPage = 30;
+  
+  // ======================== INDEXEDDB YARDIMCILARI ========================
+  const DB_NAME = 'ChefIstanbulAdmin';
+  const STORE_NAME = 'adminBg';
+  let dbInstance = null;
+
+  function openAdminBgDB() {
+    return new Promise((resolve, reject) => {
+      if (dbInstance) return resolve(dbInstance);
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        dbInstance = request.result;
+        resolve(dbInstance);
+      };
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+      };
+    });
+  }
+
+  async function saveAdminBgToIndexedDB(file) {
+    const db = await openAdminBgDB();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const blob = file.slice(0, file.size, file.type);
+        const arrayBuffer = await blob.arrayBuffer();
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({
+          id: 'bgMedia',
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          data: arrayBuffer,
+          mime: file.type,
+          name: file.name
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function getAdminBgFromIndexedDB() {
+    const db = await openAdminBgDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction([STORE_NAME], 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const getRequest = store.get('bgMedia');
+      getRequest.onsuccess = () => {
+        const record = getRequest.result;
+        if (record && record.data) {
+          const blob = new Blob([record.data], { type: record.mime });
+          const url = URL.createObjectURL(blob);
+          resolve({ url, type: record.type, blob });
+        } else {
+          resolve(null);
+        }
+      };
+      getRequest.onerror = () => resolve(null);
+    });
+  }
+
+  async function deleteAdminBgFromIndexedDB() {
+    const db = await openAdminBgDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE_NAME], 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const deleteRequest = store.delete('bgMedia');
+      deleteRequest.onsuccess = () => resolve();
+      deleteRequest.onerror = (err) => reject(err);
+    });
+  }
+
+  async function applyAdminBackground() {
+    const bgColor = localStorage.getItem('admin_bg_color');
+    const oldVideo = document.getElementById('adminVideoBackground');
+    if (oldVideo) oldVideo.remove();
+    if (window._currentBgBlobUrl) {
+      URL.revokeObjectURL(window._currentBgBlobUrl);
+      window._currentBgBlobUrl = null;
+    }
+    const media = await getAdminBgFromIndexedDB();
+    if (media && media.type === 'video') {
+      document.body.style.background = 'none';
+      document.body.style.backgroundColor = 'transparent';
+      const videoBg = document.createElement('video');
+      videoBg.id = 'adminVideoBackground';
+      videoBg.autoplay = true;
+      videoBg.loop = true;
+      videoBg.muted = true;
+      videoBg.style.position = 'fixed';
+      videoBg.style.top = '0';
+      videoBg.style.left = '0';
+      videoBg.style.width = '100%';
+      videoBg.style.height = '100%';
+      videoBg.style.objectFit = 'cover';
+      videoBg.style.zIndex = '-1';
+      videoBg.style.opacity = '0.75';
+      videoBg.onerror = () => console.warn('Video yüklenemedi');
+      videoBg.src = media.url;
+      window._currentBgBlobUrl = media.url;
+      document.body.prepend(videoBg);
+      videoBg.play().catch(e => console.warn('Video oynatılamadı:', e));
+      if (bgColor && bgColor.trim() !== '') {
+        document.body.style.backgroundColor = bgColor;
+      } else {
+        document.body.style.backgroundColor = '#0b1120';
+      }
+    } else if (media && media.type === 'image') {
+      document.body.style.backgroundImage = `url('${media.url}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundColor = 'transparent';
+      window._currentBgBlobUrl = media.url;
+    } else if (bgColor && bgColor.trim() !== '') {
+      document.body.style.background = bgColor;
+      document.body.style.backgroundImage = 'none';
+    } else {
+      document.body.style.background = '';
+      document.body.style.backgroundColor = '';
+    }
+  }
+
+  async function resetAdminBackground() {
+    localStorage.removeItem('admin_bg_color');
+    await deleteAdminBgFromIndexedDB();
+    await applyAdminBackground();
+    const colorInput = document.getElementById('adminBgColor');
+    if (colorInput) colorInput.value = '#0b1120';
+    document.getElementById('adminBgMediaPreview').innerHTML = '';
+    document.getElementById('adminBgMediaPreview').style.display = 'none';
+    document.getElementById('adminBgMediaDropzone').style.display = 'block';
+    document.getElementById('removeAdminBgMediaBtn').style.display = 'none';
+    tempAdminBgFile = null;
+  }
+
+  async function loadProductsMap() {
+    try {
+      const prods = await fetch('/api/products').then(r => r.json());
+      productMap.clear();
+      prods.forEach(p => productMap.set(p.id, p));
+    } catch(e) { console.warn("Ürün haritası yüklenemedi:", e); }
+  }
+
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[m]); }
+  
+  // Admin Logo ve başlık yükleme - GÜNCELLENDİ (sayfa yenilenmeden çalışır)
+  async function loadAdminLogo() {
+    try {
+      const settings = await fetch('/api/settings').then(r => r.json());
+      const logoContainer = document.getElementById('logoContainer');
+      if (settings.admin_logo) {
+        logoContainer.innerHTML = `<img src="${settings.admin_logo}" style="width:100%;height:100%;object-fit:contain;">`;
+      } else {
+        logoContainer.innerHTML = '<span class="text-3xl font-bold text-orange-500">C</span>';
+      }
+      const adminTitleSpan = document.getElementById('dynamicRestoName');
+      if (adminTitleSpan) {
+        adminTitleSpan.innerText = settings.admin_title || 'Chef İstanbul';
+      }
+      const adminFooterDiv = document.getElementById('adminFooterDiv');
+      if (adminFooterDiv) {
+        const footerText = settings.admin_footer_text || '';
+        if (footerText.trim() !== '') {
+          adminFooterDiv.innerHTML = footerText;
+          adminFooterDiv.style.display = 'block';
+        } else {
+          adminFooterDiv.innerHTML = '';
+          adminFooterDiv.style.display = 'none';
+        }
+      }
+      const featuredTitle = settings.featured_title || 'Ek Menü Yönetimi';
+      const featuredDisplay = document.getElementById('featuredTitleDisplay');
+      const featuredInput = document.getElementById('featuredTitleInput');
+      if (featuredDisplay) featuredDisplay.innerText = featuredTitle;
+      if (featuredInput) featuredInput.value = featuredTitle;
+      
+      // Admin logo formunu da güncelle - logo varsa dropzone gizle
+      updateAdminLogoForm(settings.admin_logo);
+      
+    } catch(e) { console.warn("Admin logo yüklenemedi", e); }
+  }
+
+  // Admin logo formunu güncelle (dropzone gizle/göster)
+  function updateAdminLogoForm(logoUrl) {
+    const previewDiv = document.getElementById('adminLogoPreview');
+    const dropzone = document.getElementById('adminLogoDropzone');
+    const removeBtn = document.getElementById('removeAdminLogoBtn');
+    
+    if (logoUrl) {
+      previewDiv.innerHTML = `<img src="${logoUrl}" class="img-preview" style="max-width:120px;">`;
+      previewDiv.style.display = 'block';
+      dropzone.style.display = 'none';
+      removeBtn.style.display = 'block';
+    } else {
+      previewDiv.innerHTML = '<span class="text-muted text-sm">Logo yüklenmemiş</span>';
+      previewDiv.style.display = 'block';
+      dropzone.style.display = 'block';
+      removeBtn.style.display = 'none';
+    }
+  }
+
+  // Site ayarları formunu yükle - Admin logo formu güncellendi
+  async function loadSiteSettingsForm() {
+    const s = JSON.parse(localStorage.getItem('kf_settings') || '{}');
+    document.getElementById('adminTitle').value = s.admin_title || 'Chef İstanbul';
+    document.getElementById('adminFooterText').value = s.admin_footer_text || '';
+    
+    // Admin logo formunu güncelle
+    updateAdminLogoForm(s.admin_logo);
+    
+    const savedBg = localStorage.getItem('admin_bg_color');
+    const bgColorInput = document.getElementById('adminBgColor');
+    if (bgColorInput) {
+      bgColorInput.value = savedBg && savedBg.trim() !== '' ? savedBg : '#0b1120';
+    }
+    const media = await getAdminBgFromIndexedDB();
+    const previewMediaDiv = document.getElementById('adminBgMediaPreview');
+    const dropzoneDiv = document.getElementById('adminBgMediaDropzone');
+    const removeMediaBtn = document.getElementById('removeAdminBgMediaBtn');
+    if (media) {
+      if (media.type === 'video') {
+        previewMediaDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> Video yüklü</div>`;
+      } else {
+        previewMediaDiv.innerHTML = `<img src="${media.url}" class="img-preview">`;
+      }
+      previewMediaDiv.style.display = 'flex';
+      dropzoneDiv.style.display = 'none';
+      removeMediaBtn.style.display = 'block';
+    } else {
+      previewMediaDiv.style.display = 'none';
+      dropzoneDiv.style.display = 'block';
+      removeMediaBtn.style.display = 'none';
+    }
+    if (tempAdminBgFile) {
+      const isVideo = tempAdminBgFile.type.startsWith('video/');
+      if (isVideo) {
+        previewMediaDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${tempAdminBgFile.name}</div>`;
+      } else {
+        const url = URL.createObjectURL(tempAdminBgFile);
+        previewMediaDiv.innerHTML = `<img src="${url}" class="img-preview">`;
+        URL.revokeObjectURL(url);
+      }
+      previewMediaDiv.style.display = 'flex';
+      dropzoneDiv.style.display = 'none';
+      removeMediaBtn.style.display = 'block';
+    }
+    document.getElementById('newUsername').value = '';
+    document.getElementById('usernamePassword').value = '';
+    document.getElementById('oldPass').value = '';
+    document.getElementById('newPass').value = '';
+    document.getElementById('confirmPass').value = '';
+    document.getElementById('usernameMsg').innerHTML = '';
+    document.getElementById('passwordMsg').innerHTML = '';
+  }
+
+  // Admin logo kaydet - GÜNCELLENDİ (sayfa yenilenmeden logo güncellenir)
+  async function saveAdminLogoTitle() {
+    const adminTitle = document.getElementById('adminTitle').value.trim() || 'Chef İstanbul';
+    const adminFooterText = document.getElementById('adminFooterText').value;
+    const logoFile = document.getElementById('adminLogoInput').files[0];
+    const fd = new FormData();
+    fd.append('admin_title', adminTitle);
+    fd.append('admin_footer_text', adminFooterText);
+    if (logoFile) {
+      if (logoFile.size > 2 * 1024 * 1024) {
+        alert('Logo dosyası 2MB\'dan büyük olamaz.');
+        return;
+      }
+      fd.append('admin_logo', logoFile);
+    }
+    try {
+      const res = await fetch('/api/settings', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Kaydedilemedi');
+      // Logo ve başlık güncellendi - sayfa yenilenmeden
+      await loadAdminLogo();
+      await loadSiteSettingsForm();
+      // Admin logo input'u temizle
+      document.getElementById('adminLogoInput').value = '';
+      alert('Logo, başlık ve footer metni başarıyla güncellendi.');
+    } catch(err) {
+      alert('Hata: ' + err.message);
+    }
+  }
+
+  // Admin logo kaldır - GÜNCELLENDİ (mesaj kaldırıldı)
+  async function removeAdminLogo() {
+    if (!confirm('Admin logosunu kaldırmak istediğinize emin misiniz?')) return;
+    await fetch('/api/settings/remove-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'admin_logo' })
+    });
+    // Logo kaldırıldı - sayfa yenilenmeden
+    await loadAdminLogo();
+    await loadSiteSettingsForm();
+    // Mesaj gösterilmiyor - sadece güncelleniyor
+  }
+
+  function renderCatList() {
+    const container = document.getElementById('cat-list');
+    const totalPages = Math.ceil(cats.length / itemsPerPage);
+    const start = (currentCatPage - 1) * itemsPerPage;
+    const pageCats = cats.slice(start, start + itemsPerPage);
+    if (!cats.length) {
+      container.innerHTML = `<div class="category-empty-state text-center py-12"><i class="fa fa-folder-open text-4xl mb-2 opacity-50"></i><p>Henüz kategori eklenmemiş</p><button onclick="openCatModal()" class="btn-modern btn-primary mt-3">İlk Kategoriyi Ekle</button></div>`;
+      document.getElementById('cat-pagination').innerHTML = '';
+      return;
+    }
+    container.innerHTML = pageCats.map(c => {
+      const bgImage = c.image ? `url('${c.image}')` : null;
+      return `
+      <div class="cat-card">
+        <div class="cat-card-image" style="${bgImage ? `background-image: ${bgImage}; background-size: cover;` : `background: ${c.color || '#f97316'}20;`}">
+          ${!bgImage ? `<i class="fa ${c.icon || 'fa-utensils'} icon-bg" style="color: ${c.color || '#f97316'}"></i>` : ''}
+        </div>
+        <div class="cat-card-content">
+          <div class="cat-card-name">
+            <span>${escapeHtml(c.name)}</span>
+            <div class="cat-card-actions">
+              <button class="cat-edit-btn" onclick="editCat(${c.id})"><i class="fa fa-pen"></i></button>
+              <button class="cat-delete-btn" onclick="deleteCat(${c.id})"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="text-xs text-muted mt-1">${c.id ? 'ID '+c.id : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+    let paginationHtml = `<div class="pagination">`;
+    for (let i = 1; i <= totalPages; i++) {
+      paginationHtml += `<button class="page-btn ${i === currentCatPage ? 'active' : ''}" onclick="goToCatPage(${i})">${i}</button>`;
+    }
+    paginationHtml += `</div>`;
+    document.getElementById('cat-pagination').innerHTML = paginationHtml;
+  }
+  function goToCatPage(page) { currentCatPage = page; renderCatList(); }
+
+  let currentEditingCatId = null;
+  function openCatModal(cat=null) {
+    currentEditingCatId = cat ? cat.id : null;
+    const titleEl = document.getElementById('cat-modal-title');
+    if (cat) {
+      titleEl.textContent = 'Kategori Düzenle';
+    } else {
+      titleEl.textContent = 'Yeni Kategori Ekle';
+    }
+    document.getElementById('cm-id').value = cat ? cat.id : '';
+    document.getElementById('cm-name').value = cat ? cat.name : '';
+    document.getElementById('cm-color').value = cat ? (cat.color || '#f97316') : '#f97316';
+    document.getElementById('cm-icon').value = cat ? (cat.icon || 'fa-utensils') : 'fa-utensils';
+    renderIconGrid(cat?.icon || 'fa-utensils');
+    const previewDiv = document.getElementById('cm-img-preview');
+    const removeBtn = document.getElementById('remove-cat-img-btn');
+    if(cat && cat.image) {
+      previewDiv.innerHTML = `<img src="${cat.image}" class="img-preview">`;
+      removeBtn.style.display = 'inline-flex';
+      removeBtn.setAttribute('data-img-url', cat.image);
+    } else {
+      previewDiv.innerHTML = '';
+      removeBtn.style.display = 'none';
+    }
+    document.getElementById('cm-img').value = '';
+    document.getElementById('cat-modal').style.display = 'flex';
+  }
+  function closeCatModal() { document.getElementById('cat-modal').style.display = 'none'; currentEditingCatId = null; }
+  function renderIconGrid(selected) {
+    const container = document.getElementById('icon-grid');
+    container.innerHTML = ICONS.map(ic => `<div class="icon-grid-item ${ic === selected ? 'selected' : ''}" onclick="selectIcon('${ic}')"><i class="fa ${ic}"></i></div>`).join('');
+  }
+  function selectIcon(ic) { document.getElementById('cm-icon').value = ic; renderIconGrid(ic); }
+  
+  async function removeCatImage() {
+    if (!currentEditingCatId) return;
+    if (!confirm('Bu kategorinin görselini tamamen kaldırmak istediğinize emin misiniz?')) return;
+    const fd = new FormData();
+    fd.append('remove_image', '1');
+    try {
+      await fetch(`/api/categories/${currentEditingCatId}`, { method: 'PUT', body: fd });
+      await loadCats();
+      closeCatModal();
+    } catch(e) { alert('Görsel kaldırılamadı: '+e.message); }
+  }
+  
+  async function saveCat() {
+    const id = document.getElementById('cm-id').value;
+    const name = document.getElementById('cm-name').value.trim();
+    if (!name) return alert('Kategori adı gerekli');
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('icon', document.getElementById('cm-icon').value);
+    fd.append('color', document.getElementById('cm-color').value);
+    const imgFile = document.getElementById('cm-img').files[0];
+    if (imgFile) fd.append('image', imgFile);
+    try {
+      await fetch(id ? `/api/categories/${id}` : '/api/categories', { method: id ? 'PUT' : 'POST', body: fd });
+      closeCatModal();
+      await loadCats();
+      if (document.getElementById('sec-categories').style.display !== 'none') renderCatList();
+    } catch(e) { alert('Kaydetme hatası: ' + e.message); }
+  }
+  async function editCat(id) { const c = cats.find(x => x.id === id); if(c) openCatModal(c); }
+  async function deleteCat(id) { if(!confirm('Bu kategori silinsin mi?')) return; await fetch(`/api/categories/${id}`, { method: 'DELETE' }); await loadCats(); if (document.getElementById('sec-categories').style.display !== 'none') renderCatList(); }
+
+  document.getElementById('cm-img')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('cm-img-preview');
+    const removeBtn = document.getElementById('remove-cat-img-btn');
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = function(ev) { preview.innerHTML = `<img src="${ev.target.result}" class="img-preview">`; removeBtn.style.display = 'none'; };
+      reader.readAsDataURL(file);
+    } else { if(!currentEditingCatId) preview.innerHTML = ''; else { const cat = cats.find(c=>c.id==currentEditingCatId); if(cat?.image) { preview.innerHTML = `<img src="${cat.image}" class="img-preview">`; removeBtn.style.display = 'inline-flex'; } else { preview.innerHTML=''; removeBtn.style.display='none'; } } }
+  });
+
+  function orderCard(o, showCheckbox = false, isChecked = false) {
+    const time = new Date(o.created_at).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+    let badgeClass = 'badge-modern ';
+    let label = '';
+    if(o.status === 'pending'){ badgeClass += 'status-busy'; label = '⏳ Bekliyor'; }
+    else if(o.status === 'preparing'){ badgeClass += 'status-busy'; label = '👨‍🍳 Hazırlanıyor'; }
+    else if(o.status === 'on_the_way'){ badgeClass += 'status-busy'; label = '🚚 Yolda'; }
+    else if(o.status === 'delivered'){ badgeClass += 'status-free'; label = '✅ Teslim Edildi'; }
+    else if(o.status === 'completed'){ badgeClass += 'status-free'; label = '💰 Ödendi'; }
+    else if(o.status === 'rejected'){ badgeClass += 'status-busy'; label = '❌ Reddedildi'; }
+    else { badgeClass += 'status-free'; label = '📦 Kabul Edildi'; }
+    
+    const itemsHtml = (o.items||[]).map(it => {
+      const imgUrl = getItemImageUrl(it);
+      return `<div class="flex gap-3 py-2 border-b border-white/10">
+                <div class="w-14 h-14 rounded-xl bg-black/30 flex items-center justify-center overflow-hidden">
+                  ${imgUrl ? `<img src="${imgUrl}" class="w-full h-full object-cover rounded-xl">` : '<i class="fa fa-utensils text-2xl opacity-60"></i>'}
+                </div>
+                <div class="flex-1">
+                  <div class="font-semibold text-sm">${escapeHtml(it.name)}</div>
+                  <div class="text-xs text-muted">x${it.quantity} — ₺${(it.price * it.quantity).toFixed(2)}</div>
+                </div>
+              </div>`;
+    }).join('');
+    
+    let actionButtons = '';
+    if(o.status === 'pending') {
+      actionButtons = `<div class="flex gap-2 pt-3">
+        <button onclick="acceptOrder(${o.id}, ${o.table_id})" class="btn-modern btn-success flex-1"><i class="fa fa-check"></i> Hazırlanıyor</button>
+      </div>`;
+    } 
+    else if(o.status === 'preparing') {
+      actionButtons = `<div class="flex gap-2 pt-3">
+        <button onclick="markAsReady(${o.id})" class="btn-modern" style="background:#10b981; color:white;"><i class="fa fa-check-circle"></i> Hazır</button>
+      </div>`;
+    }
+    
+    const checkboxHtml = showCheckbox ? `<div class="order-checkbox-wrapper"><input type="checkbox" class="accepted-checkbox" data-id="${o.id}" ${isChecked ? 'checked' : ''}></div>` : '';
+    
+    return `<div class="order-modern p-4" style="position: relative; ${showCheckbox ? 'padding-left: 48px;' : ''}">
+              ${checkboxHtml}
+              <div class="flex justify-between items-center mb-3">
+                <div><span class="font-bold">${escapeHtml(o.table_name)}</span><span class="text-xs text-muted ml-2">${time}</span></div>
+                <div><span class="${badgeClass}">${label}</span><span class="ml-3 font-bold text-brand">₺${Number(o.total).toFixed(2)}</span></div>
+              </div>
+              ${itemsHtml}
+              ${o.note ? `<div class="mt-2 text-xs bg-black/30 p-2 rounded-xl">📝 ${escapeHtml(o.note)}</div>` : ''}
+              ${actionButtons}
+            </div>`;
+  }
+
+  async function updateOrderStatus(orderId, newStatus) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!res.ok) throw new Error('Güncellenemedi');
+      await reloadOrders();
+    } catch(e) { alert(e.message); }
+  }
+  async function markAsReady(orderId) {
+    await updateOrderStatus(orderId, 'delivered');
+    showBanner(`Sipariş #${orderId} teslim edildi ve kabul edilenlere taşındı.`);
+  }
+  function getItemImageUrl(item) {
+    if (item.image) return item.image;
+    if (item.product_id && productMap.has(item.product_id)) {
+      const prod = productMap.get(item.product_id);
+      if (prod.image) return prod.image;
+    }
+    return null;
+  }
+  
+  async function loadOrders(f) {
+    orderFilter = f;
+    document.getElementById('f-pending').className = `btn-modern ${f==='pending'?'btn-primary':''}`;
+    document.getElementById('f-accepted').className = `btn-modern ${f==='accepted'?'btn-primary':''}`;
+    document.getElementById('f-all').className = `btn-modern ${f==='all'?'btn-primary':''}`;
+    if(f !== 'pending'){ pendingCount=0; updateBadge(); }
+    if (f !== 'all') {
+      if (ordersSelectMode) disableOrdersSelectMode();
+      if (acceptedSelectMode) disableAcceptedSelectMode();
+    }
+    await reloadOrders();
+  }
+  async function reloadOrders() {
+    const url = orderFilter === 'all' ? '/api/orders?status=all' : `/api/orders?status=${orderFilter}`;
+    const r = await fetch(url);
+    const orders = await r.json();
+    allOrdersList = orders;
+    if (orderFilter === 'all') {
+      document.getElementById('orders-list').style.display = 'none';
+      document.getElementById('orders-table-container').style.display = 'block';
+      document.getElementById('accepted-controls').style.display = 'none';
+      currentOrdersPage = 1;
+      if (!ordersSelectMode) {
+        selectedOrderIds.clear();
+      } else {
+        selectedOrderIds.clear();
+      }
+      renderAllOrdersTable();
+      updateOrdersButtonsVisibility();
+    } 
+    else if (orderFilter === 'accepted') {
+      document.getElementById('orders-list').style.display = 'flex';
+      document.getElementById('orders-table-container').style.display = 'none';
+      document.getElementById('accepted-controls').style.display = 'flex';
+      acceptedOrdersList = orders;
+      currentAcceptedPage = 1;
+      if (!acceptedSelectMode) {
+        selectedAcceptedIds.clear();
+      } else {
+        selectedAcceptedIds.clear();
+      }
+      renderAcceptedOrdersWithPagination();
+      document.getElementById('accepted-pagination').style.display = 'flex';
+      updateAcceptedButtonsVisibility();
+    }
+    else {
+      document.getElementById('orders-list').style.display = 'flex';
+      document.getElementById('orders-table-container').style.display = 'none';
+      document.getElementById('accepted-pagination').style.display = 'none';
+      document.getElementById('accepted-controls').style.display = 'none';
+      renderOrders(orders);
+    }
+  }
+  
+  function renderAcceptedOrdersWithPagination() {
+    const totalPages = Math.ceil(acceptedOrdersList.length / acceptedPerPage);
+    const start = (currentAcceptedPage - 1) * acceptedPerPage;
+    const pageOrders = acceptedOrdersList.slice(start, start + acceptedPerPage);
+    const container = document.getElementById('orders-list');
+    if (!pageOrders.length) {
+      container.innerHTML = '<div class="text-center text-muted p-12">📭 Teslim edilmiş sipariş yok</div>';
+    } else {
+      container.innerHTML = pageOrders.map(o => orderCard(o, acceptedSelectMode, selectedAcceptedIds.has(o.id))).join('');
+    }
+    let pagHtml = '';
+    if (totalPages > 1) {
+      pagHtml += '<div class="pagination">';
+      for (let i = 1; i <= totalPages; i++) {
+        pagHtml += `<button class="page-btn ${i === currentAcceptedPage ? 'active' : ''}" onclick="goToAcceptedPage(${i})">${i}</button>`;
+      }
+      pagHtml += '</div>';
+    }
+    document.getElementById('accepted-pagination').innerHTML = pagHtml;
+    document.getElementById('accepted-pagination').style.display = totalPages > 1 ? 'flex' : 'none';
+    
+    if (acceptedSelectMode) {
+      attachAcceptedCheckboxEvents();
+    }
+    updateAcceptedButtonsVisibility();
+  }
+  
+  function goToAcceptedPage(page) {
+    currentAcceptedPage = page;
+    renderAcceptedOrdersWithPagination();
+  }
+  
+  function renderOrders(orders) {
+    const el = document.getElementById('orders-list');
+    if(!orders.length){ el.innerHTML='<div class="text-center text-muted p-12">📭 Sipariş yok</div>'; return; }
+    el.innerHTML = orders.map(o => orderCard(o)).join('');
+  }
+  
+  function prependOrder(order) {
+    if (orderFilter !== 'all') {
+      if (orderFilter === 'accepted') {
+        reloadOrders();
+      } else {
+        const el = document.getElementById('orders-list');
+        const empty = el.querySelector('.text-center');
+        if(empty) empty.remove();
+        const d = document.createElement('div');
+        d.innerHTML = orderCard(order);
+        d.firstChild.classList.add('animate-in');
+        el.prepend(d.firstChild);
+      }
+    } else {
+      reloadOrders();
+    }
+    updateTableStatus(order.table_id, true);
+  }
+  async function acceptOrder(id, tableId) {
+    await fetch(`/api/orders/${id}/accept`, { method: 'POST' });
+    updateTableStatus(tableId, true);
+    await reloadOrders();
+  }
+  function updateBadge() {
+    const el = document.getElementById('order-badge');
+    if(pendingCount>0) { el.textContent = pendingCount; el.style.display='inline-block'; } else el.style.display='none';
+    document.title = pendingCount>0 ? `(${pendingCount}) Chef İstanbul Admin` : 'Chef İstanbul Admin';
+  }
+  function showBanner(msg) {
+    const b = document.getElementById('banner');
+    document.getElementById('banner-txt').textContent = msg;
+    b.style.display='flex';
+    clearTimeout(b._t);
+    b._t = setTimeout(()=>b.style.display='none',7000);
+  }
+  function applyTopbar(s) { 
+    const titleSpan = document.getElementById('dynamicRestoName');
+    if (titleSpan) {
+      titleSpan.textContent = s.admin_title || 'Chef İstanbul';
+    }
+  }
+
+  function renderAllOrdersTable() {
+    const totalPages = Math.ceil(allOrdersList.length / ordersPerPage);
+    const start = (currentOrdersPage - 1) * ordersPerPage;
+    const pageOrders = allOrdersList.slice(start, start + ordersPerPage);
+    
+    const showCheckbox = ordersSelectMode;
+    
+    const rows = pageOrders.map(o => {
+      const statusText = o.status === 'pending' ? 'Bekliyor' : (o.status === 'preparing' ? 'Hazırlanıyor' : (o.status === 'delivered' ? 'Teslim Edildi' : (o.status === 'completed' ? 'Ödendi' : o.status)));
+      return `
+        <tr class="border-b border-white/10 hover:bg-white/5 transition">
+          ${showCheckbox ? `<td class="px-3 py-2 w-8 text-center"><input type="checkbox" class="order-checkbox rounded border-gray-600" data-id="${o.id}" ${selectedOrderIds.has(o.id) ? 'checked' : ''}></td>` : ''}
+          <td class="px-3 py-2 font-mono text-sm">${o.id}</td>
+          <td class="px-3 py-2 font-medium">${escapeHtml(o.table_name)}</td>
+          <td class="px-3 py-2 text-brand font-bold">₺${Number(o.total).toFixed(2)}</td>
+          <td class="px-3 py-2"><span class="badge-modern ${o.status === 'completed' ? 'status-free' : (o.status === 'delivered' ? 'status-free' : 'status-busy')}">${statusText}</span></td>
+          <td class="px-3 py-2 text-xs text-muted whitespace-nowrap">${new Date(o.created_at).toLocaleString('tr-TR')}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    const tableHtml = `
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[700px] border-collapse">
+          <thead>
+            <tr class="bg-black/30 border-b border-white/10">
+              ${showCheckbox ? '<th class="px-3 py-3 w-8 text-center"><input type="checkbox" id="masterOrdersCheckbox" class="rounded border-gray-600"></th>' : ''}
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">ID</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Masa</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Toplam</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Durum</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tarih</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="6" class="text-center py-8 text-muted">📭 Sipariş bulunamadı</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+    document.getElementById('orders-table').innerHTML = tableHtml;
+    
+    let pagHtml = `<div class="pagination flex justify-center gap-2 mt-4">`;
+    if (totalPages > 1) {
+      for (let i = 1; i <= totalPages; i++) {
+        pagHtml += `<button class="page-btn ${i === currentOrdersPage ? 'active' : ''}" onclick="goToOrdersPage(${i})">${i}</button>`;
+      }
+    } else if (totalPages === 0) {
+      pagHtml += ``;
+    } else {
+      pagHtml += `<button class="page-btn active">1</button>`;
+    }
+    pagHtml += `</div>`;
+    document.getElementById('orders-pagination').innerHTML = pagHtml;
+    
+    if (showCheckbox) {
+      attachOrdersCheckboxEvents();
+      syncOrdersMasterCheckbox();
+    }
+    updateOrdersDeleteButtonVisibility();
+  }
+  
+  function attachOrdersCheckboxEvents() {
+    document.querySelectorAll('.order-checkbox').forEach(cb => {
+      cb.removeEventListener('change', orderCheckboxHandler);
+      cb.addEventListener('change', orderCheckboxHandler);
+    });
+    const masterCb = document.getElementById('masterOrdersCheckbox');
+    if (masterCb) {
+      masterCb.removeEventListener('change', masterOrdersCheckboxHandler);
+      masterCb.addEventListener('change', masterOrdersCheckboxHandler);
+    }
+  }
+  
+  function orderCheckboxHandler(e) {
+    const id = parseInt(e.target.dataset.id);
+    if (e.target.checked) selectedOrderIds.add(id);
+    else selectedOrderIds.delete(id);
+    updateOrdersDeleteButtonVisibility();
+    syncOrdersMasterCheckbox();
+  }
+  
+  function masterOrdersCheckboxHandler(e) {
+    const isChecked = e.target.checked;
+    document.querySelectorAll('.order-checkbox').forEach(cb => {
+      cb.checked = isChecked;
+      const id = parseInt(cb.dataset.id);
+      if (isChecked) selectedOrderIds.add(id);
+      else selectedOrderIds.delete(id);
+    });
+    updateOrdersDeleteButtonVisibility();
+  }
+  
+  function syncOrdersMasterCheckbox() {
+    const master = document.getElementById('masterOrdersCheckbox');
+    if (!master) return;
+    const allCbs = document.querySelectorAll('.order-checkbox');
+    if (allCbs.length === 0) {
+      master.checked = false;
+      master.indeterminate = false;
+      return;
+    }
+    const allChecked = Array.from(allCbs).every(cb => cb.checked);
+    const someChecked = Array.from(allCbs).some(cb => cb.checked);
+    master.checked = allChecked;
+    master.indeterminate = someChecked && !allChecked;
+  }
+  
+  function updateOrdersDeleteButtonVisibility() {
+    const delBtn = document.getElementById('deleteSelectedOrdersBtn');
+    if (delBtn) delBtn.style.display = (ordersSelectMode && selectedOrderIds.size > 0) ? 'inline-flex' : 'none';
+  }
+  
+  async function deleteSelectedOrders() {
+    if (!ordersSelectMode) return;
+    if (selectedOrderIds.size === 0) return;
+    if (!confirm(`${selectedOrderIds.size} siparişi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) return;
+    try {
+      const res = await fetch('/api/orders/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: JSON.stringify({ ids: Array.from(selectedOrderIds) })
+      });
+      if (!res.ok) throw new Error('Silme başarısız');
+      alert('Seçili siparişler silindi.');
+      await reloadOrders();
+    } catch (err) {
+      alert('Hata: ' + err.message);
+    }
+  }
+  
+  function goToOrdersPage(page) {
+    currentOrdersPage = page;
+    renderAllOrdersTable();
+  }
+  
+  function enableOrdersSelectMode() {
+    ordersSelectMode = true;
+    selectedOrderIds.clear();
+    renderAllOrdersTable();
+    updateOrdersButtonsVisibility();
+  }
+  
+  function disableOrdersSelectMode() {
+    ordersSelectMode = false;
+    selectedOrderIds.clear();
+    renderAllOrdersTable();
+    updateOrdersButtonsVisibility();
+  }
+  
+  function updateOrdersButtonsVisibility() {
+    const selectBtn = document.getElementById('enableSelectModeBtn');
+    const cancelBtn = document.getElementById('cancelSelectModeBtn');
+    const selectAllBtn = document.getElementById('selectAllOrdersBtn');
+    const deleteBtn = document.getElementById('deleteSelectedOrdersBtn');
+    
+    if (ordersSelectMode) {
+      selectBtn.style.display = 'none';
+      cancelBtn.style.display = 'inline-flex';
+      selectAllBtn.style.display = 'inline-flex';
+      deleteBtn.style.display = selectedOrderIds.size > 0 ? 'inline-flex' : 'none';
+    } else {
+      selectBtn.style.display = 'inline-flex';
+      cancelBtn.style.display = 'none';
+      selectAllBtn.style.display = 'none';
+      deleteBtn.style.display = 'none';
+    }
+  }
+
+  function enableAcceptedSelectMode() {
+    acceptedSelectMode = true;
+    selectedAcceptedIds.clear();
+    renderAcceptedOrdersWithPagination();
+  }
+  
+  function disableAcceptedSelectMode() {
+    acceptedSelectMode = false;
+    selectedAcceptedIds.clear();
+    renderAcceptedOrdersWithPagination();
+  }
+  
+  function updateAcceptedButtonsVisibility() {
+    const selectBtn = document.getElementById('enableAcceptedSelectBtn');
+    const cancelBtn = document.getElementById('cancelAcceptedSelectBtn');
+    const selectAllBtn = document.getElementById('selectAllAcceptedBtn');
+    const deleteBtn = document.getElementById('deleteSelectedAcceptedBtn');
+    
+    if (acceptedSelectMode) {
+      selectBtn.style.display = 'none';
+      cancelBtn.style.display = 'inline-flex';
+      selectAllBtn.style.display = 'inline-flex';
+      deleteBtn.style.display = selectedAcceptedIds.size > 0 ? 'inline-flex' : 'none';
+    } else {
+      selectBtn.style.display = 'inline-flex';
+      cancelBtn.style.display = 'none';
+      selectAllBtn.style.display = 'none';
+      deleteBtn.style.display = 'none';
+    }
+  }
+  
+  function attachAcceptedCheckboxEvents() {
+    document.querySelectorAll('.accepted-checkbox').forEach(cb => {
+      cb.removeEventListener('change', acceptedCheckboxHandler);
+      cb.addEventListener('change', acceptedCheckboxHandler);
+    });
+  }
+  
+  function acceptedCheckboxHandler(e) {
+    const id = parseInt(e.target.dataset.id);
+    if (e.target.checked) selectedAcceptedIds.add(id);
+    else selectedAcceptedIds.delete(id);
+    updateAcceptedButtonsVisibility();
+  }
+  
+  function selectAllAccepted() {
+    acceptedOrdersList.forEach(order => selectedAcceptedIds.add(order.id));
+    renderAcceptedOrdersWithPagination();
+  }
+  
+  async function deleteSelectedAccepted() {
+    if (!acceptedSelectMode) return;
+    if (selectedAcceptedIds.size === 0) return;
+    if (!confirm(`${selectedAcceptedIds.size} teslim edilmiş siparişi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) return;
+    try {
+      const res = await fetch('/api/orders/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: JSON.stringify({ ids: Array.from(selectedAcceptedIds) })
+      });
+      if (!res.ok) throw new Error('Silme başarısız');
+      alert('Seçili teslim edilmiş siparişler silindi.');
+      await reloadOrders();
+    } catch (err) {
+      alert('Hata: ' + err.message);
+    }
+  }
+  
+  async function loadSales() {
+    try {
+      const d = await fetch('/api/sales/report').then(r => r.json());
+      const stats = [
+        {label:'Toplam Ciro',val:`₺${Number(d.totalRevenue).toFixed(2)}`,color:'#f97316'},
+        {label:'Toplam Sipariş',val:d.totalOrders,color:'#3b82f6'},
+        {label:'Net Kâr',val:`₺${Number(d.netProfit).toFixed(2)}`,color:'#22c55e'},
+        {label:"Bugünkü Ciro",val:`₺${Number(d.todayRevenue).toFixed(2)}`,color:'#a855f7'},
+        {label:"Bugünkü Sipariş",val:d.todayOrders,color:'#ec4899'},
+        {label:'Ort. Sipariş',val:`₺${Number(d.avgOrder).toFixed(2)}`,color:'#f59e0b'}
+      ];
+      document.getElementById('stats-grid').innerHTML = stats.map(s => `
+        <div class="card-glass p-3 text-center" style="border-top:3px solid ${s.color}"><div class="text-xs text-muted">${s.label}</div><div class="text-xl font-bold" style="color:${s.color}">${s.val}</div></div>
+      `).join('');
+      allSalesList = d.sales || [];
+      currentSalesPage = 1;
+      selectedSalesIds.clear();
+      renderSalesPage();
+    } catch(e) {
+      console.error('Satışlar yüklenemedi', e);
+      document.getElementById('stats-grid').innerHTML = '<div class="text-center text-muted p-4">Satış verileri alınamadı</div>';
+      allSalesList = [];
+      renderSalesPage();
+    }
+  }
+
+  function renderSalesPage() {
+    const totalPages = Math.ceil(allSalesList.length / salesPerPage);
+    const start = (currentSalesPage - 1) * salesPerPage;
+    const pageSales = allSalesList.slice(start, start + salesPerPage);
+    
+    const showCheckbox = salesSelectMode;
+    
+    const rows = pageSales.map(s => `
+      <tr data-sale-id="${s.id}">
+        ${showCheckbox ? `<td class="p-3 w-8"><input type="checkbox" class="sale-checkbox" data-id="${s.id}" ${selectedSalesIds.has(s.id) ? 'checked' : ''}></td>` : ''}
+        <td class="p-3">${new Date(s.created_at).toLocaleString('tr-TR')}</td>
+        <td class="p-3 font-medium">${escapeHtml(s.table_name)}</td>
+        <td class="p-3 text-brand font-bold">₺${Number(s.total).toFixed(2)}</td>
+        <td class="p-3 text-success">₺${Number(s.total - (s.cost||0)).toFixed(2)}</td>
+        <td class="p-3"><span class="badge-modern ${s.payment_type==='card' ? 'status-free' : 'status-busy'}">${s.payment_type==='card' ? 'Kart' : 'Nakit'}</span></td>
+      </tr>
+    `).join('');
+    
+    const headerCheckbox = showCheckbox ? '<th class="p-3"><input type="checkbox" id="masterSalesCheckbox"></th>' : '';
+    const colCount = showCheckbox ? 6 : 5;
+    
+    document.getElementById('sales-table').innerHTML = `
+      <div class="sales-table-wrapper">
+        <table class="w-full">
+          <thead>
+            <tr>
+              ${headerCheckbox}
+              <th>Tarih</th>
+              <th>Masa</th>
+              <th>Tutar</th>
+              <th>Kâr</th>
+              <th>Ödeme</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="${colCount}" class="text-center p-4">Henüz satış yok</td></tr>`}</tbody>
+        </table>
+      </div>
+    `;
+    
+    let pagHtml = `<div class="pagination">`;
+    if (totalPages > 1) {
+      for (let i = 1; i <= totalPages; i++) {
+        pagHtml += `<button class="page-btn ${i === currentSalesPage ? 'active' : ''}" onclick="goToSalesPage(${i})">${i}</button>`;
+      }
+    }
+    pagHtml += `</div>`;
+    document.getElementById('sales-pagination').innerHTML = pagHtml;
+    
+    if (showCheckbox) {
+      attachSalesCheckboxEvents();
+      syncMasterCheckbox();
+    }
+    updateSalesButtonsVisibility();
+  }
+  
+  function attachSalesCheckboxEvents() {
+    document.querySelectorAll('.sale-checkbox').forEach(cb => {
+      cb.removeEventListener('change', saleCheckboxHandler);
+      cb.addEventListener('change', saleCheckboxHandler);
+    });
+    const masterCb = document.getElementById('masterSalesCheckbox');
+    if (masterCb) {
+      masterCb.removeEventListener('change', masterSalesCheckboxHandler);
+      masterCb.addEventListener('change', masterSalesCheckboxHandler);
+    }
+  }
+  
+  function saleCheckboxHandler(e) {
+    const id = parseInt(e.target.dataset.id);
+    if (e.target.checked) selectedSalesIds.add(id);
+    else selectedSalesIds.delete(id);
+    updateSalesButtonsVisibility();
+    syncMasterCheckbox();
+  }
+  
+  function masterSalesCheckboxHandler(e) {
+    const isChecked = e.target.checked;
+    document.querySelectorAll('.sale-checkbox').forEach(cb => {
+      cb.checked = isChecked;
+      const id = parseInt(cb.dataset.id);
+      if (isChecked) selectedSalesIds.add(id);
+      else selectedSalesIds.delete(id);
+    });
+    updateSalesButtonsVisibility();
+  }
+  
+  function syncMasterCheckbox() {
+    const master = document.getElementById('masterSalesCheckbox');
+    if (!master) return;
+    const allCbs = document.querySelectorAll('.sale-checkbox');
+    if (allCbs.length === 0) {
+      master.checked = false;
+      master.indeterminate = false;
+      return;
+    }
+    const allChecked = Array.from(allCbs).every(cb => cb.checked);
+    const someChecked = Array.from(allCbs).some(cb => cb.checked);
+    master.checked = allChecked;
+    master.indeterminate = someChecked && !allChecked;
+  }
+  
+  function updateSalesButtonsVisibility() {
+    const selectBtn = document.getElementById('enableSalesSelectModeBtn');
+    const cancelBtn = document.getElementById('cancelSalesSelectModeBtn');
+    const selectAllBtn = document.getElementById('selectAllSalesBtn');
+    const deleteBtn = document.getElementById('deleteSelectedSalesBtn');
+    
+    if (salesSelectMode) {
+      selectBtn.style.display = 'none';
+      cancelBtn.style.display = 'inline-flex';
+      selectAllBtn.style.display = 'inline-flex';
+      deleteBtn.style.display = selectedSalesIds.size > 0 ? 'inline-flex' : 'none';
+    } else {
+      selectBtn.style.display = 'inline-flex';
+      cancelBtn.style.display = 'none';
+      selectAllBtn.style.display = 'none';
+      deleteBtn.style.display = 'none';
+    }
+  }
+  
+  function enableSalesSelectMode() {
+    salesSelectMode = true;
+    selectedSalesIds.clear();
+    renderSalesPage();
+  }
+  
+  function disableSalesSelectMode() {
+    salesSelectMode = false;
+    selectedSalesIds.clear();
+    renderSalesPage();
+  }
+  
+  async function deleteSelectedSales() {
+    if (!salesSelectMode) return;
+    if (selectedSalesIds.size === 0) return;
+    if (!confirm(`${selectedSalesIds.size} satış kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) return;
+    try {
+      const res = await fetch('/api/sales/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+        body: JSON.stringify({ ids: Array.from(selectedSalesIds) })
+      });
+      if (!res.ok) throw new Error('Silme başarısız');
+      alert('Seçili satışlar silindi.');
+      await loadSales();
+    } catch (err) {
+      alert('Hata: ' + err.message);
+    }
+  }
+
+  function goToSalesPage(page) {
+    currentSalesPage = page;
+    renderSalesPage();
+  }
+
+  function getSalesDataForPDF() {
+    let totalRevenue = 0, totalCost = 0, totalOrders = allSalesList.length;
+    allSalesList.forEach(s => {
+      totalRevenue += s.total || 0;
+      totalCost += s.cost || 0;
+    });
+    const netProfit = totalRevenue - totalCost;
+    const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const today = new Date().toISOString().split('T')[0];
+    const todaySales = allSalesList.filter(s => s.created_at && s.created_at.startsWith(today));
+    const todayRevenue = todaySales.reduce((sum, s) => sum + (s.total || 0), 0);
+    const todayOrders = todaySales.length;
+
+    return {
+      totalRevenue,
+      totalCost,
+      netProfit,
+      totalOrders,
+      todayRevenue,
+      todayOrders,
+      avgOrder,
+      sales: allSalesList.slice(0, 100)
+    };
+  }
+
+  function exportSalesToPDF() {
+    const data = getSalesDataForPDF();
+    if (!data.sales || data.sales.length === 0) {
+      alert('Yazdırılacak satış verisi bulunamadı.');
+      return;
+    }
+
+    const pdfContent = `
+      <div class="pdf-report-container" id="pdf-report-content">
+        <h1>📊 Satış Raporu</h1>
+        <div class="subtitle">${new Date().toLocaleString('tr-TR')} • Chef İstanbul</div>
+        
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Toplam Ciro</div><div class="value" style="color:#f97316;">₺${data.totalRevenue.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="label">Toplam Sipariş</div><div class="value" style="color:#3b82f6;">${data.totalOrders}</div></div>
+          <div class="stat-card"><div class="label">Net Kâr</div><div class="value" style="color:#22c55e;">₺${data.netProfit.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="label">Bugünkü Ciro</div><div class="value" style="color:#a855f7;">₺${data.todayRevenue.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="label">Bugünkü Sipariş</div><div class="value" style="color:#ec4899;">${data.todayOrders}</div></div>
+          <div class="stat-card"><div class="label">Ortalama Sipariş</div><div class="value" style="color:#f59e0b;">₺${data.avgOrder.toFixed(2)}</div></div>
+        </div>
+
+        <h3 style="margin-top: 20px; font-size: 18px; font-weight: 700; border-bottom: 2px solid #f97316; padding-bottom: 8px;">📋 Son İşlemler</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Masa</th>
+              <th>Tutar</th>
+              <th>Kâr</th>
+              <th>Ödeme</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.sales.map(s => `
+              <tr>
+                <td>${new Date(s.created_at).toLocaleString('tr-TR')}</td>
+                <td>${escapeHtml(s.table_name)}</td>
+                <td>₺${Number(s.total).toFixed(2)}</td>
+                <td>₺${Number(s.total - (s.cost||0)).toFixed(2)}</td>
+                <td>${s.payment_type === 'card' ? 'Kart' : 'Nakit'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="footer">Chef İstanbul © ${new Date().getFullYear()} • Rapor ${new Date().toLocaleString('tr-TR')}</div>
+      </div>
+    `;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = pdfContent;
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '1000px';
+    tempDiv.style.background = 'white';
+    tempDiv.style.zIndex = '9999';
+    document.body.appendChild(tempDiv);
+
+    const element = tempDiv.querySelector('.pdf-report-container');
+    html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
+      }
+
+      pdf.save('Satis_Raporu.pdf');
+      document.body.removeChild(tempDiv);
+    }).catch(err => {
+      console.error('PDF oluşturma hatası:', err);
+      alert('PDF oluşturulurken bir hata oluştu. Lütfen konsolu kontrol edin.');
+      document.body.removeChild(tempDiv);
+    });
+  }
+
+  async function loadTables() {
+    try {
+      const tables = await fetch('/api/tables').then(r => r.json());
+      const tablesWithStatus = await Promise.all(tables.map(async t => {
+        const tabRes = await fetch(`/api/tab/${t.id}`).then(r => r.json());
+        return { ...t, isBusy: tabRes.items && tabRes.items.length > 0 };
+      }));
+      allTablesList = tablesWithStatus;
+      currentTablesPage = 1;
+      renderTablesPage();
+    } catch(e) {
+      console.warn('Masalar yüklenemedi', e);
+      document.getElementById('tables-grid').innerHTML = '<div class="text-center text-muted py-8">Masalar yüklenirken hata oluştu.</div>';
+      document.getElementById('tables-pagination').innerHTML = '';
+    }
+  }
+
+  function renderTablesPage() {
+    const totalPages = Math.ceil(allTablesList.length / tablesPerPage);
+    if (totalPages === 0) {
+      document.getElementById('tables-grid').innerHTML = '<div class="text-center text-muted py-8">Hiç masa bulunamadı.</div>';
+      document.getElementById('tables-pagination').innerHTML = '';
+      return;
+    }
+    const start = (currentTablesPage - 1) * tablesPerPage;
+    const pageTables = allTablesList.slice(start, start + tablesPerPage);
+    
+    const gridHtml = pageTables.map(t => `
+      <div class="card-glass p-4 table-card" data-table-id="${t.id}">
+        <div class="flex justify-between items-start">
+          <div><div class="font-bold text-lg">${escapeHtml(t.name)}</div><div class="text-xs text-muted">${t.slug}</div></div>
+          <div class="table-status badge-modern ${t.isBusy ? 'status-busy' : 'status-free'}"><i class="fa fa-circle"></i> ${t.isBusy ? 'Dolu' : 'Boş'}</div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <a href="/kiosk/${t.slug}" target="_blank" class="btn-modern flex-1 justify-center"><i class="fa fa-display"></i> Kiosk</a>
+          <button onclick="openTab(${t.id},'${escapeHtml(t.name).replace(/'/g, "\\'")}')" class="btn-modern flex-1 justify-center"><i class="fa fa-receipt"></i> Adisyon</button>
+          <button onclick="openPayModal(${t.id},'${escapeHtml(t.name).replace(/'/g, "\\'")}')" class="btn-modern btn-success flex-1 justify-center"><i class="fa fa-money-bill-wave"></i> Ödeme</button>
+        </div>
+        <button onclick="deleteTable(${t.id})" class="btn-modern btn-danger w-full mt-3 justify-center"><i class="fa fa-trash"></i> Masayı Sil</button>
+      </div>
+    `).join('');
+    document.getElementById('tables-grid').innerHTML = gridHtml;
+    
+    let pagHtml = `<div class="pagination">`;
+    if (totalPages > 1) {
+      for (let i = 1; i <= totalPages; i++) {
+        pagHtml += `<button class="page-btn ${i === currentTablesPage ? 'active' : ''}" onclick="gotoTablesPage(${i})">${i}</button>`;
+      }
+    }
+    pagHtml += `</div>`;
+    document.getElementById('tables-pagination').innerHTML = pagHtml;
+  }
+
+  function gotoTablesPage(page) {
+    currentTablesPage = page;
+    renderTablesPage();
+  }
+  
+  async function addTable() {
+    const name = document.getElementById('tbl-name').value.trim();
+    if(!name) return;
+    await fetch('/api/tables',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+    document.getElementById('tbl-name').value='';
+    await loadTables();
+  }
+  async function deleteTable(id) {
+    if(!confirm('Masayı silmek adisyonunu da siler, emin misiniz?')) return;
+    await fetch(`/api/tables/${id}`,{method:'DELETE'});
+    await loadTables();
+  }
+
+  async function openTab(tableId, tableName) {
+    currentTabTableId = tableId;
+    document.getElementById('tab-title').textContent = `${tableName} — Adisyon`;
+    await refreshTab();
+    document.getElementById('tab-modal').style.display='flex';
+  }
+  async function refreshTab() {
+    if(!currentTabTableId) return;
+    const {items,total}=await fetch(`/api/tab/${currentTabTableId}`).then(r=>r.json());
+    document.getElementById('tab-body').innerHTML = items.length ? items.map(it=>`
+      <div class="flex gap-3 py-2 border-b border-white/10">
+        <div class="w-10 h-10 rounded-lg bg-black/30 flex items-center justify-center overflow-hidden">
+          ${it.image ? `<img src="${it.image}" class="w-full h-full object-cover rounded-lg">` : '<i class="fa fa-utensils text-lg"></i>'}
+        </div>
+        <div class="flex-1"><div>${it.name} <span class="text-muted text-xs">x${it.quantity}</span></div></div>
+        <div class="font-bold text-brand">₺${(it.price*it.quantity).toFixed(2)}</div>
+      </div>
+    `).join('') : '<div class="text-muted text-center p-4">Adisyon boş</div>';
+    document.getElementById('tab-footer').innerHTML = items.length ? `<div class="flex justify-between font-bold text-lg"><span>Toplam</span><span class="text-brand">₺${Number(total).toFixed(2)}</span></div>` : '';
+  }
+  function closeTabModal() { document.getElementById('tab-modal').style.display='none'; currentTabTableId=null; }
+  
+  async function openPayModal(tableId, tableName) {
+    currentPayTableId = tableId;
+    const {items,total}=await fetch(`/api/tab/${tableId}`).then(r=>r.json());
+    if(!items.length) return alert('Adisyon boş, ödeme yapılamaz.');
+    document.getElementById('pay-summary').innerHTML = `
+      <div class="bg-black/30 p-3 rounded-xl">
+        ${items.map(it=>`<div class="flex justify-between text-sm"><span>${it.name} x${it.quantity}</span><span>₺${(it.price*it.quantity).toFixed(2)}</span></div>`).join('')}
+        <div class="flex justify-between font-bold mt-2 pt-2 border-t border-white/20"><span>Toplam</span><span class="text-brand">₺${Number(total).toFixed(2)}</span></div>
+        <div class="text-xs text-muted mt-2">Masa: ${tableName}</div>
+      </div>`;
+    document.getElementById('pay-modal').style.display='flex';
+  }
+  function closePayModal() { document.getElementById('pay-modal').style.display='none'; }
+  async function confirmPayment() {
+    const payType = document.querySelector('input[name="pay-type"]:checked').value;
+    const r = await fetch(`/api/tab/${currentPayTableId}/close`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment_type:payType})});
+    const d=await r.json();
+    if(!d.ok) return alert(d.error);
+    closePayModal();
+    showReceipt(d);
+    updateTableStatus(currentPayTableId, false);
+    loadTables();
+  }
+  function showReceipt(data) {
+    const s = JSON.parse(localStorage.getItem('kf_settings')||'{}');
+    document.getElementById('receipt-body').innerHTML = `
+      <div class="text-center mb-3"><div class="font-bold">${s.restaurant_name||'Restoran'}</div><div class="text-xs text-muted">${new Date().toLocaleString('tr-TR')}</div><div>${data.table_name}</div><div class="text-xs text-muted">${data.payment_type==='card'?'Kart':'Nakit'}</div></div>
+      <hr class="border-white/20 my-2">
+      <div>${data.items.map(it=>`<div class="flex justify-between text-sm"><span>${it.name} x${it.quantity}</span><span>₺${(it.price*it.quantity).toFixed(2)}</span></div>`).join('')}</div>
+      <hr class="border-white/20 my-2">
+      <div class="flex justify-between font-bold"><span>TOPLAM</span><span class="text-brand">₺${Number(data.total).toFixed(2)}</span></div>
+      <div class="text-center text-xs text-muted mt-3">${s.footer_text||'Afiyet olsun!'}</div>`;
+    document.getElementById('receipt-modal').style.display='flex';
+  }
+  function printReceipt() { window.print(); }
+
+  async function updateTableStatus(tableId, isBusy) {
+    const tableCard = document.querySelector(`.table-card[data-table-id='${tableId}']`);
+    if(tableCard){
+      const statusBadge = tableCard.querySelector('.table-status');
+      if(statusBadge){
+        if(isBusy){
+          statusBadge.innerHTML='<i class="fa fa-circle"></i> Dolu';
+          statusBadge.classList.remove('status-free');
+          statusBadge.classList.add('status-busy');
+        } else {
+          statusBadge.innerHTML='<i class="fa fa-circle"></i> Boş';
+          statusBadge.classList.remove('status-busy');
+          statusBadge.classList.add('status-free');
+        }
+      }
+    } else {
+      await loadTables();
+    }
+  }
+
+  async function loadCats() {
+    const r=await fetch('/api/categories');
+    cats=await r.json();
+    if (document.getElementById('sec-categories').style.display !== 'none') renderCatList();
+    populateCatSelects();
+  }
+  function populateCatSelects() {
+    const opts = cats.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    document.getElementById('pe-cat').innerHTML='<option value="">Seçiniz</option>'+opts;
+    document.getElementById('prod-filter-cat').innerHTML='<option value="">Tüm Kategoriler</option>'+opts;
+  }
+  
+  function cancelProd() {
+    ['pe-id','pe-name','pe-price','pe-cost','pe-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pe-cat').value='';
+    document.getElementById('pe-img').value='';
+    document.getElementById('pe-img-prev').innerHTML='';
+    document.getElementById('pe-avail').checked=true;
+    document.getElementById('prod-form-title').textContent='Yeni Ürün';
+  }
+  async function saveProd() {
+    const name=document.getElementById('pe-name').value.trim();
+    if(!name) return;
+    const id=document.getElementById('pe-id').value;
+    const fd=new FormData();
+    fd.append('name',name);
+    fd.append('price',document.getElementById('pe-price').value||0);
+    fd.append('cost',document.getElementById('pe-cost').value||0);
+    fd.append('category_id',document.getElementById('pe-cat').value);
+    fd.append('description',document.getElementById('pe-desc').value);
+    fd.append('available',document.getElementById('pe-avail').checked?'1':'0');
+    const img=document.getElementById('pe-img').files[0];
+    if(img) fd.append('image',img);
+    await fetch(id?`/api/products/${id}`:'/api/products',{method:id?'PUT':'POST',body:fd});
+    cancelProd();
+    loadProds();
+    loadProductsMap();
+  }
+  async function editProd(id) {
+    const prods = await fetch('/api/products').then(r => r.json());
+    const p = prods.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pe-id').value = p.id;
+    document.getElementById('pe-name').value = p.name;
+    document.getElementById('pe-price').value = p.price;
+    document.getElementById('pe-cost').value = p.cost || 0;
+    document.getElementById('pe-cat').value = p.category_id || '';
+    document.getElementById('pe-desc').value = p.description || '';
+    document.getElementById('pe-avail').checked = !!p.available;
+    document.getElementById('pe-img-prev').innerHTML = p.image ? `<img src="${p.image}" class="w-16 h-16 rounded-xl">` : '';
+    document.getElementById('prod-form-title').textContent = 'Ürünü Düzenle';
+  }
+  async function deleteProd(id) {
+    if (!confirm('Silinsin mi?')) return;
+    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    loadProds();
+    loadProductsMap();
+  }
+
+  let tempBgMediaFile = null;
+  let tempScreensaverFile = null;
+  
+  async function saveAppearanceSettings() {
+    try {
+      const fd = new FormData();
+      fd.append('kiosk_bg_color', document.getElementById('s-bg-color').value);
+      fd.append('kiosk_btn_color', document.getElementById('s-btn-color').value);
+      fd.append('screensaver_timeout', document.getElementById('s-screensaver-timeout').value);
+      if (tempBgMediaFile) {
+        const isVideo = tempBgMediaFile.type.startsWith('video/');
+        if (isVideo) {
+          fd.append('kiosk_ambient_video', tempBgMediaFile);
+          fd.append('remove_kiosk_bg_image', '1');
+        } else {
+          fd.append('kiosk_bg_image', tempBgMediaFile);
+          fd.append('remove_ambient_video', '1');
+        }
+        tempBgMediaFile = null;
+      }
+      if (tempScreensaverFile) {
+        fd.append('kiosk_screensaver_video', tempScreensaverFile);
+        tempScreensaverFile = null;
+      }
+      const res = await fetch('/api/settings', { method: 'POST', body: fd });
+      if (res.ok) {
+        alert('Görünüm ayarları başarıyla kaydedildi.');
+        await loadSettingsForm();
+        document.getElementById('s-bg-media').value = '';
+        document.getElementById('s-screensaver-video').value = '';
+      } else {
+        alert('Kaydedilemedi: ' + (await res.text()));
+      }
+    } catch(e) {
+      alert('Hata: ' + e.message);
+    }
+  }
+
+  async function removeBgMedia() {
+    if (!confirm('Arka plan medyasını kalıcı olarak kaldırmak istediğinize emin misiniz?')) return;
+    const currentSettings = await fetch('/api/settings').then(r => r.json());
+    if (currentSettings.kiosk_ambient_video) {
+      await fetch('/api/settings/remove-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'kiosk_ambient_video' })
+      });
+    }
+    if (currentSettings.kiosk_bg_image) {
+      await fetch('/api/settings/remove-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'kiosk_bg_image' })
+      });
+    }
+    tempBgMediaFile = null;
+    document.getElementById('s-bg-media').value = '';
+    await loadSettingsForm();
+    alert('Arka plan medyası kaldırıldı.');
+  }
+
+  async function removeMedia(key, previewId, dropzoneId) {
+    if (!confirm('Bu medyayı kalıcı olarak kaldırmak istediğinize emin misiniz?')) return;
+    let fd = new FormData();
+    if (key === 'restaurant_logo') {
+      fd.append('remove_restaurant_logo', '1');
+    } else if (key === 'kiosk_screensaver_video') {
+      fd.append('remove_screensaver_video', '1');
+      tempScreensaverFile = null;
+      document.getElementById('s-screensaver-video').value = '';
+    } else {
+      fd.append(`remove_${key}`, '1');
+    }
+    await fetch('/api/settings', { method: 'POST', body: fd });
+    await loadSettingsForm();
+    document.getElementById(previewId).style.display = 'none';
+    document.getElementById(previewId).innerHTML = '';
+    if (dropzoneId) document.getElementById(dropzoneId).style.display = 'block';
+    alert('Medya kaldırıldı.');
+  }
+
+  async function loadSettingsForm() {
+    const s = await fetch('/api/settings').then(r => r.json());
+    localStorage.setItem('kf_settings', JSON.stringify(s));
+    document.getElementById('s-name').value = s.restaurant_name || '';
+    document.getElementById('s-slogan').value = s.kiosk_slogan || '';
+    document.getElementById('s-footer').value = s.footer_text || '';
+    document.getElementById('s-welcome-footer').value = s.welcome_footer_text || 'Chef İstanbul © 2026';
+    document.getElementById('s-bg-color').value = s.kiosk_bg_color || '#0f172a';
+    document.getElementById('s-btn-color').value = s.kiosk_btn_color || '#f97316';
+    document.getElementById('s-screensaver-timeout').value = s.screensaver_timeout || '30';
+    
+    const logoPreviewDiv = document.getElementById('s-logo-prev');
+    const logoDropzone = document.getElementById('logoDropzone');
+    const removeLogoBtn = document.getElementById('removeLogoBtn');
+    if (s.restaurant_logo) {
+      logoPreviewDiv.innerHTML = `<img src="${s.restaurant_logo}" class="img-preview"><p class="text-success text-xs mt-1">✅ Logo seçildi</p>`;
+      logoPreviewDiv.style.display = 'flex';
+      logoDropzone.style.display = 'none';
+      removeLogoBtn.style.display = 'block';
+    } else {
+      logoPreviewDiv.style.display = 'none';
+      logoDropzone.style.display = 'block';
+      removeLogoBtn.style.display = 'none';
+    }
+    
+    const bgPreviewDiv = document.getElementById('bgMediaPreview');
+    const bgDropzone = document.getElementById('bgMediaDropzone');
+    const removeBgBtn = document.getElementById('removeBgMediaBtn');
+    if (s.kiosk_ambient_video) {
+      bgPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${s.kiosk_ambient_video.split('/').pop()}</div>`;
+      bgPreviewDiv.style.display = 'flex';
+      bgDropzone.style.display = 'none';
+      removeBgBtn.style.display = 'block';
+    } else if (s.kiosk_bg_image) {
+      bgPreviewDiv.innerHTML = `<img src="${s.kiosk_bg_image}" class="img-preview">`;
+      bgPreviewDiv.style.display = 'flex';
+      bgDropzone.style.display = 'none';
+      removeBgBtn.style.display = 'block';
+    } else {
+      bgPreviewDiv.style.display = 'none';
+      bgDropzone.style.display = 'block';
+      removeBgBtn.style.display = 'none';
+    }
+    if (tempBgMediaFile) {
+      const isVideo = tempBgMediaFile.type.startsWith('video/');
+      if (isVideo) {
+        bgPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${tempBgMediaFile.name}</div>`;
+      } else {
+        const url = URL.createObjectURL(tempBgMediaFile);
+        bgPreviewDiv.innerHTML = `<img src="${url}" class="img-preview">`;
+        URL.revokeObjectURL(url);
+      }
+      bgPreviewDiv.style.display = 'flex';
+      bgDropzone.style.display = 'none';
+      removeBgBtn.style.display = 'block';
+    }
+    
+    const ssPreviewDiv = document.getElementById('s-screensaver-preview');
+    const ssDropzone = document.getElementById('screensaverDropzone');
+    const removeSsBtn = document.getElementById('removeScreensaverBtn');
+    if (s.kiosk_screensaver_video) {
+      ssPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${s.kiosk_screensaver_video.split('/').pop()}</div>`;
+      ssPreviewDiv.style.display = 'flex';
+      ssDropzone.style.display = 'none';
+      removeSsBtn.style.display = 'block';
+    } else {
+      ssPreviewDiv.style.display = 'none';
+      ssDropzone.style.display = 'block';
+      removeSsBtn.style.display = 'none';
+    }
+    if (tempScreensaverFile) {
+      ssPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${tempScreensaverFile.name}</div>`;
+      ssPreviewDiv.style.display = 'flex';
+      ssDropzone.style.display = 'none';
+      removeSsBtn.style.display = 'block';
+    }
+    
+    document.getElementById('tb-ip').textContent = `${location.hostname}:${location.port || 3000}`;
+  }
+
+  function setupDropzone(elementId, fileInputId, onFileSelected, previewId, removeBtnId, isTempFile = false) {
+    const dropzone = document.getElementById(elementId);
+    const fileInput = document.getElementById(fileInputId);
+    if (!dropzone || !fileInput) return;
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        fileInput.files = files;
+        if (onFileSelected) onFileSelected(files[0]);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length && onFileSelected) onFileSelected(e.target.files[0]);
+    });
+  }
+
+  async function uploadLogo(file) {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('restaurant_logo', file);
+    await fetch('/api/settings', { method: 'POST', body: fd });
+    await loadSettingsForm();
+    showBanner('Logo güncellendi');
+  }
+
+  function selectBackgroundMedia(file) {
+    if (!file) return;
+    tempBgMediaFile = file;
+    const bgPreviewDiv = document.getElementById('bgMediaPreview');
+    const bgDropzone = document.getElementById('bgMediaDropzone');
+    const removeBgBtn = document.getElementById('removeBgMediaBtn');
+    const isVideo = file.type.startsWith('video/');
+    if (isVideo) {
+      bgPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${file.name}</div>`;
+    } else {
+      const url = URL.createObjectURL(file);
+      bgPreviewDiv.innerHTML = `<img src="${url}" class="img-preview">`;
+      URL.revokeObjectURL(url);
+    }
+    bgPreviewDiv.style.display = 'flex';
+    bgDropzone.style.display = 'none';
+    removeBgBtn.style.display = 'block';
+    showBanner('Arka plan medyası seçildi. Kaydetmek için "Görünüm Ayarlarını Kaydet" butonuna basın.');
+  }
+
+  function selectScreensaver(file) {
+    if (!file) return;
+    tempScreensaverFile = file;
+    const ssPreviewDiv = document.getElementById('s-screensaver-preview');
+    const ssDropzone = document.getElementById('screensaverDropzone');
+    const removeSsBtn = document.getElementById('removeScreensaverBtn');
+    ssPreviewDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${file.name}</div>`;
+    ssPreviewDiv.style.display = 'flex';
+    ssDropzone.style.display = 'none';
+    removeSsBtn.style.display = 'block';
+    showBanner('Ekran koruyucu videosu seçildi. Kaydetmek için "Görünüm Ayarlarını Kaydet" butonuna basın.');
+  }
+
+  async function saveRestaurantSettings() {
+    try {
+      const fd = new FormData();
+      fd.append('restaurant_name', document.getElementById('s-name').value);
+      fd.append('kiosk_slogan', document.getElementById('s-slogan').value);
+      fd.append('footer_text', document.getElementById('s-footer').value);
+      fd.append('welcome_footer_text', document.getElementById('s-welcome-footer').value);
+      const logoFile = document.getElementById('s-logo').files[0];
+      if (logoFile) fd.append('restaurant_logo', logoFile);
+      const res = await fetch('/api/settings', { method: 'POST', body: fd });
+      if (res.ok) {
+        alert('Restoran bilgileri başarıyla kaydedildi.');
+        await loadSettingsForm();
+      } else {
+        alert('Kaydedilemedi: ' + (await res.text()));
+      }
+    } catch(e) {
+      alert('Hata: ' + e.message);
+    }
+  }
+
+  let soundSettingsLoaded = false;
+  function updateVolumeAndPreview(val) {
+    const percent = Math.round(val * 100);
+    document.getElementById('vol-val').textContent = percent + '%';
+    soundSettings.vol = parseFloat(val);
+    if (audioCtx && soundSettings.on) {
+      playNotif();
+    }
+  }
+  function unlockAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    document.getElementById('notif-overlay').style.display = 'none';
+    if (!soundSettingsLoaded) {
+      loadSoundSettings();
+      soundSettingsLoaded = true;
+    }
+  }
+  function playNotif() {
+    if (!soundSettings.on || !audioCtx) return;
+    const freqs = { default: [880,1100,880], chime:[1047,1319,1568], bell:[1200,1600,1200], ding:[1760,1760], notify:[880,1100,1320,1100,880] };
+    const seq = freqs[tempSelectedSound] || freqs.default;
+    seq.forEach((f,i)=>{
+      const osc=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      osc.frequency.value=f;
+      g.gain.setValueAtTime(soundSettings.vol, audioCtx.currentTime+i*0.18);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+i*0.18+0.17);
+      osc.start(audioCtx.currentTime+i*0.18);
+      osc.stop(audioCtx.currentTime+i*0.18+0.18);
+    });
+  }
+  function selectSound(id) {
+    tempSelectedSound = id;
+    renderSoundList();
+    if (!audioCtx) unlockAudio();
+    else playNotif();
+  }
+  function saveSoundSettings() {
+    soundSettings.on = document.getElementById('snd-on').checked;
+    soundSettings.vol = parseFloat(document.getElementById('snd-vol').value);
+    soundSettings.snd = tempSelectedSound;
+    localStorage.setItem('kf_snd_on', soundSettings.on ? '1' : '0');
+    localStorage.setItem('kf_snd_vol', soundSettings.vol);
+    localStorage.setItem('kf_snd_snd', soundSettings.snd);
+    fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notification_on: soundSettings.on ? '1' : '0', notification_vol: soundSettings.vol.toString(), notification_snd: soundSettings.snd }) })
+      .then(() => {
+        alert('Ses ayarları kaydedildi.');
+        const statusSpan = document.getElementById('soundStatusText');
+        if (statusSpan) {
+          statusSpan.textContent = soundSettings.on ? 'Açık' : 'Kapalı';
+          statusSpan.className = `text-xs px-2 py-1 rounded-full ${soundSettings.on ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`;
+        }
+      })
+      .catch(e => alert('Kaydedilemedi: ' + e.message));
+  }
+  function loadSoundSettings() {
+    const on = localStorage.getItem('kf_snd_on');
+    const vol = localStorage.getItem('kf_snd_vol');
+    const snd = localStorage.getItem('kf_snd_snd');
+    soundSettings.on = on === null ? true : on === '1';
+    soundSettings.vol = vol === null ? 0.8 : parseFloat(vol);
+    soundSettings.snd = snd || 'default';
+    tempSelectedSound = soundSettings.snd;
+    document.getElementById('snd-on').checked = soundSettings.on;
+    document.getElementById('snd-vol').value = soundSettings.vol;
+    document.getElementById('vol-val').textContent = Math.round(soundSettings.vol*100)+'%';
+    const statusSpan = document.getElementById('soundStatusText');
+    if (statusSpan) {
+      statusSpan.textContent = soundSettings.on ? 'Açık' : 'Kapalı';
+      statusSpan.className = `text-xs px-2 py-1 rounded-full ${soundSettings.on ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`;
+    }
+    renderSoundList();
+  }
+  function renderSoundList() {
+    const sounds = [{id:'default',label:'🔔 Varsayılan'},{id:'chime',label:'🎵 Chime'},{id:'bell',label:'🔔 Bell'},{id:'ding',label:'🔊 Ding'},{id:'notify',label:'📳 Notify'}];
+    document.getElementById('sound-list').innerHTML = sounds.map(s => `<div class="badge-modern ${tempSelectedSound===s.id?'bg-brand/20 border-brand':''}" style="cursor:pointer;" onclick="selectSound('${s.id}')">${s.label}</div>`).join('');
+  }
+
+  function updateWaiterBadge() {
+    const badge = document.getElementById('waiter-badge');
+    if (!badge) return;
+    const count = waiterCalls.length;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  async function loadWaiterCalls() {
+    try {
+      const res = await fetch('/api/calls');
+      if (!res.ok) throw new Error();
+      const calls = await res.json();
+      waiterCalls = calls;
+      renderWaiterCalls();
+      updateWaiterBadge();
+    } catch(e) {
+      console.warn('Garson çağrıları yüklenemedi', e);
+      document.getElementById('waiter-calls-list').innerHTML = '<div class="text-center text-muted py-8">Çağrılar yüklenemedi</div>';
+    }
+  }
+  function renderWaiterCalls() {
+    const container = document.getElementById('waiter-calls-list');
+    if (!waiterCalls.length) {
+      container.innerHTML = '<div class="text-center text-muted py-8"><i class="fa-regular fa-bell-slash fa-3x mb-3 opacity-30"></i><br />Hiç bekleyen garson çağrısı yok.</div>';
+      return;
+    }
+    container.innerHTML = waiterCalls.map(call => `
+      <div class="waiter-call-item" data-call-id="${call.id}">
+        <div class="waiter-call-info">
+          <div class="table-name"><i class="fa fa-chair"></i> ${escapeHtml(call.table_name)}</div>
+          <div class="time"><i class="fa-regular fa-clock"></i> ${new Date(call.created_at).toLocaleTimeString('tr-TR')}</div>
+        </div>
+        <button class="resolve-call-btn" onclick="resolveCall(${call.id})" title="Çağrı tamamlandı">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+  async function resolveCall(callId) {
+    try {
+      const res = await fetch(`/api/calls/${callId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      await loadWaiterCalls();
+    } catch(e) {
+      alert('Çağrı tamamlanamadı: ' + e.message);
+    }
+  }
+
+  let currentFeaturedId = null;
+  function openFeaturedModal(id = null) {
+    currentFeaturedId = id;
+    if(id) {
+      const item = featuredItems.find(i => i.id === id);
+      if(item) {
+        document.getElementById('fm-id').value = item.id;
+        document.getElementById('fm-name').value = item.name;
+        document.getElementById('fm-price').value = item.price;
+        document.getElementById('fm-sort').value = item.sort_order || 0;
+        document.getElementById('fm-desc').value = item.description || '';
+        const preview = document.getElementById('fm-img-preview');
+        if(item.image) preview.innerHTML = `<img src="${item.image}" class="img-preview">`;
+        else preview.innerHTML = '';
+        const removeBtn = document.getElementById('remove-featured-img-btn');
+        if(item.image) removeBtn.style.display = 'inline-flex';
+        else removeBtn.style.display = 'none';
+      }
+    } else {
+      document.getElementById('fm-id').value = '';
+      document.getElementById('fm-name').value = '';
+      document.getElementById('fm-price').value = '';
+      document.getElementById('fm-sort').value = 0;
+      document.getElementById('fm-desc').value = '';
+      document.getElementById('fm-img-preview').innerHTML = '';
+      document.getElementById('remove-featured-img-btn').style.display = 'none';
+    }
+    document.getElementById('featured-modal').style.display = 'flex';
+  }
+  function closeFeaturedModal() {
+    document.getElementById('featured-modal').style.display = 'none';
+    currentFeaturedId = null;
+  }
+  async function saveFeaturedItem() {
+    const id = document.getElementById('fm-id').value;
+    const name = document.getElementById('fm-name').value.trim();
+    if(!name) return alert('Ürün adı gerekli');
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('price', document.getElementById('fm-price').value || 0);
+    fd.append('description', document.getElementById('fm-desc').value);
+    fd.append('sort_order', document.getElementById('fm-sort').value || 0);
+    if (!id) {
+      fd.append('active', '1');
+    }
+    const imgFile = document.getElementById('fm-img').files[0];
+    if(imgFile) fd.append('image', imgFile);
+    try {
+      let url = id ? `/api/featured/${id}` : '/api/featured';
+      let method = id ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, body: fd });
+      if(!res.ok) throw new Error('Kaydedilemedi');
+      closeFeaturedModal();
+      await loadFeaturedItems();
+      if(document.getElementById('sec-featured').style.display !== 'none') renderFeaturedList();
+    } catch(e) { alert(e.message); }
+  }
+  async function deleteFeaturedItem(id) {
+    if(!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+    await fetch(`/api/featured/${id}`, { method: 'DELETE' });
+    await loadFeaturedItems();
+    if(document.getElementById('sec-featured').style.display !== 'none') renderFeaturedList();
+  }
+  function removeFeaturedImage() {
+    document.getElementById('fm-img').value = '';
+    document.getElementById('fm-img-preview').innerHTML = '';
+    document.getElementById('remove-featured-img-btn').style.display = 'none';
+  }
+
+  // Admin logo input değiştiğinde önizleme göster (kaydet butonuna basılmadan)
+  document.getElementById('adminLogoInput')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('adminLogoPreview');
+    const dropzone = document.getElementById('adminLogoDropzone');
+    const removeBtn = document.getElementById('removeAdminLogoBtn');
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = ev => { 
+        preview.innerHTML = `<img src="${ev.target.result}" class="img-preview" style="max-width:120px;">`;
+        preview.style.display = 'block';
+        dropzone.style.display = 'none';
+        removeBtn.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Dosya seçimi iptal edildiğinde mevcut durumu geri yükle
+      loadSiteSettingsForm();
+    }
+  });
+
+  // Admin logo kaldırma (mesaj kaldırıldı)
+  document.getElementById('removeAdminLogoBtn')?.addEventListener('click', removeAdminLogo);
+
+  async function loadFeaturedItems() {
+    const res = await fetch('/api/featured');
+    featuredItems = await res.json();
+    if (document.getElementById('sec-featured').style.display !== 'none') renderFeaturedList();
+  }
+  function renderFeaturedList() {
+    const container = document.getElementById('featured-list');
+    if (!featuredItems.length) {
+      container.innerHTML = '<div class="text-center text-muted py-8">Henüz ek menü ürünü eklenmemiş.</div>';
+      document.getElementById('featured-pagination').innerHTML = '';
+      return;
+    }
+    const totalPages = Math.ceil(featuredItems.length / featuredPerPage);
+    const start = (currentFeaturedPage - 1) * featuredPerPage;
+    const pageItems = featuredItems.slice(start, start + featuredPerPage);
+    container.innerHTML = pageItems.map(item => `
+      <div class="product-row">
+        <div><img src="${item.image || 'https://placehold.co/50x50'}" style="width:50px;height:50px;object-fit:cover;border-radius:12px;"></div>
+        <div class="flex-1"><strong>${escapeHtml(item.name)}</strong> ₺${item.price}<br><span class="text-xs text-muted">Sıra: ${item.sort_order}</span></div>
+        <div class="flex gap-2">
+          <button class="btn-modern" onclick="openFeaturedModal(${item.id})"><i class="fa fa-edit"></i></button>
+          <button class="btn-modern btn-danger" onclick="deleteFeaturedItem(${item.id})"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+    let pagHtml = '<div class="pagination">';
+    for (let i = 1; i <= totalPages; i++) {
+      pagHtml += `<button class="page-btn ${i === currentFeaturedPage ? 'active' : ''}" onclick="goToFeaturedPage(${i})">${i}</button>`;
+    }
+    pagHtml += '</div>';
+    document.getElementById('featured-pagination').innerHTML = pagHtml;
+  }
+  function goToFeaturedPage(page) {
+    currentFeaturedPage = page;
+    renderFeaturedList();
+  }
+
+  document.getElementById('pe-img')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('pe-img-prev');
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = ev => preview.innerHTML = `<img src="${ev.target.result}" class="img-preview">`;
+      reader.readAsDataURL(file);
+    } else preview.innerHTML = '';
+  });
+  document.getElementById('fm-img')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('fm-img-preview');
+    const removeBtn = document.getElementById('remove-featured-img-btn');
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = ev => { preview.innerHTML = `<img src="${ev.target.result}" class="img-preview">`; removeBtn.style.display = 'inline-flex'; };
+      reader.readAsDataURL(file);
+    } else { preview.innerHTML = ''; removeBtn.style.display = 'none'; }
+  });
+
+  window.logout = function() {
+    localStorage.removeItem('admin_token');
+    window.location.href = '/login';
+  };
+
+  setupDropzone('logoDropzone', 's-logo', uploadLogo, 's-logo-prev', 'removeLogoBtn');
+  setupDropzone('bgMediaDropzone', 's-bg-media', selectBackgroundMedia, 'bgMediaPreview', 'removeBgMediaBtn');
+  setupDropzone('screensaverDropzone', 's-screensaver-video', selectScreensaver, 's-screensaver-preview', 'removeScreensaverBtn');
+  setupDropzone('adminLogoDropzone', 'adminLogoInput', (file) => {
+    // Sadece önizleme göster, kaydet butonuna basılana kadar kaydetme
+    const preview = document.getElementById('adminLogoPreview');
+    const dropzone = document.getElementById('adminLogoDropzone');
+    const removeBtn = document.getElementById('removeAdminLogoBtn');
+    if(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        preview.innerHTML = `<img src="${ev.target.result}" class="img-preview" style="max-width:120px;">`;
+        preview.style.display = 'block';
+        dropzone.style.display = 'none';
+        removeBtn.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  setupDropzone('adminBgMediaDropzone', 'adminBgMediaInput', selectAdminBgMedia, 'adminBgMediaPreview', 'removeAdminBgMediaBtn');
+
+  const resetAdminBgBtn = document.getElementById('resetAdminBgBtn');
+  if (resetAdminBgBtn) {
+    resetAdminBgBtn.addEventListener('click', () => {
+      resetAdminBackground();
+      const bgColorInput = document.getElementById('adminBgColor');
+      if (bgColorInput) bgColorInput.value = '#0b1120';
+      alert('Admin arka planı varsayılana sıfırlandı.');
+    });
+  }
+
+  document.getElementById('saveAdminAppearanceBtn')?.addEventListener('click', saveAdminLogoTitle);
+  document.getElementById('saveAdminBgMediaBtn')?.addEventListener('click', saveAdminBgMedia);
+
+  const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+  if (changeUsernameBtn) {
+    changeUsernameBtn.addEventListener('click', async () => {
+      const newUsername = document.getElementById('newUsername').value.trim();
+      const password = document.getElementById('usernamePassword').value;
+      const msgDiv = document.getElementById('usernameMsg');
+      if (!newUsername) return msgDiv.innerHTML = '<span class="text-rose-400">✗ Yeni kullanıcı adı girin</span>';
+      if (!password) return msgDiv.innerHTML = '<span class="text-rose-400">✗ Şifrenizi girin</span>';
+      msgDiv.innerHTML = '<span class="text-slate-400"><i class="fa fa-spinner fa-spin"></i> İşleniyor...</span>';
+      try {
+        const res = await fetch('/api/users/change-username', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+          body: JSON.stringify({ newUsername, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Hata oluştu');
+        localStorage.setItem('admin_token', data.token);
+        localStorage.setItem('admin_user', data.username);
+        msgDiv.innerHTML = '<span class="text-green-400">✓ Kullanıcı adı güncellendi. Sayfa yenilenecek...</span>';
+        setTimeout(() => location.reload(), 1500);
+      } catch (err) {
+        msgDiv.innerHTML = `<span class="text-rose-400">✗ ${err.message}</span>`;
+      }
+    });
+  }
+
+  const changePasswordBtnElem = document.getElementById('changePasswordBtn');
+  if (changePasswordBtnElem) {
+    changePasswordBtnElem.addEventListener('click', async () => {
+      const oldPassword = document.getElementById('oldPass').value;
+      const newPassword = document.getElementById('newPass').value;
+      const confirm = document.getElementById('confirmPass').value;
+      const msgDiv = document.getElementById('passwordMsg');
+      if (!oldPassword || !newPassword) return msgDiv.innerHTML = '<span class="text-rose-400">✗ Eski ve yeni şifre girin</span>';
+      if (newPassword !== confirm) return msgDiv.innerHTML = '<span class="text-rose-400">✗ Yeni şifreler eşleşmiyor</span>';
+      msgDiv.innerHTML = '<span class="text-slate-400"><i class="fa fa-spinner fa-spin"></i> İşleniyor...</span>';
+      try {
+        const res = await fetch('/api/users/change-password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` },
+          body: JSON.stringify({ oldPassword, newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Hata oluştu');
+        msgDiv.innerHTML = '<span class="text-green-400">✓ Şifre başarıyla değiştirildi</span>';
+        document.getElementById('oldPass').value = '';
+        document.getElementById('newPass').value = '';
+        document.getElementById('confirmPass').value = '';
+      } catch (err) {
+        msgDiv.innerHTML = `<span class="text-rose-400">✗ ${err.message}</span>`;
+      }
+    });
+  }
+
+  // Admin arka plan medya seçimi
+  function selectAdminBgMedia(file) {
+    if (!file) return;
+    if (file.size > 500 * 1024 * 1024) {
+      alert('Dosya boyutu 500MB\'ı aşıyor. Lütfen daha küçük bir dosya seçin.');
+      return;
+    }
+    tempAdminBgFile = file;
+    const previewMediaDiv = document.getElementById('adminBgMediaPreview');
+    const dropzoneDiv = document.getElementById('adminBgMediaDropzone');
+    const removeMediaBtn = document.getElementById('removeAdminBgMediaBtn');
+    const isVideo = file.type.startsWith('video/');
+    if (isVideo) {
+      previewMediaDiv.innerHTML = `<div class="video-badge"><i class="fa fa-video"></i> ${file.name}</div>`;
+    } else {
+      const url = URL.createObjectURL(file);
+      previewMediaDiv.innerHTML = `<img src="${url}" class="img-preview">`;
+      URL.revokeObjectURL(url);
+    }
+    previewMediaDiv.style.display = 'flex';
+    dropzoneDiv.style.display = 'none';
+    removeMediaBtn.style.display = 'block';
+    showBanner('Admin arka plan medyası seçildi. Kaydet butonuna basın.');
+  }
+
+  async function saveAdminBgMedia() {
+    if (!tempAdminBgFile) {
+      alert('Lütfen önce bir medya dosyası seçin.');
+      return;
+    }
+    try {
+      await saveAdminBgToIndexedDB(tempAdminBgFile);
+      await applyAdminBackground();
+      alert('Arka plan medyası başarıyla kaydedildi (yerel IndexedDB).');
+      tempAdminBgFile = null;
+      await loadSiteSettingsForm();
+    } catch (err) {
+      alert('Hata: ' + err.message);
+    }
+  }
+
+  async function removeAdminBgMedia() {
+    if (!confirm('Arka plan medyasını kalıcı olarak kaldırmak istediğinize emin misiniz?')) return;
+    await deleteAdminBgFromIndexedDB();
+    tempAdminBgFile = null;
+    await applyAdminBackground();
+    await loadSiteSettingsForm();
+    alert('Arka plan medyası kaldırıldı.');
+  }
+
+  // Admin arka plan rengi değiştiğinde otomatik kaydet
+  document.getElementById('adminBgColor')?.addEventListener('change', function(e) {
+    const color = e.target.value;
+    localStorage.setItem('admin_bg_color', color);
+    applyAdminBackground();
+    loadSiteSettingsForm();
+    showBanner('Arka plan rengi kaydedildi.');
+  });
+
+  function goto(name) {
+    const sections = ['orders', 'categories', 'menu', 'tables', 'sales', 'settings', 'featured', 'waiter', 'site-settings'];
+    sections.forEach(n => { 
+      const sec = document.getElementById(`sec-${n}`);
+      if (sec) sec.style.display = n === name ? 'block' : 'none';
+      const nav = document.getElementById(`nav-${n}`);
+      if (nav) nav.classList.toggle('active', n === name);
+    });
+    if (name === 'orders') {
+      pendingCount = 0;
+      updateBadge();
+      currentAcceptedPage = 1;
+    } else if (name === 'waiter') {
+      const badge = document.getElementById('waiter-badge');
+      if (badge) badge.style.display = 'none';
+    } else if (name === 'site-settings') {
+      loadSiteSettingsForm();
+    }
+    if(name === 'categories') { renderCatList(); currentCatPage = 1; loadCats().then(()=>renderCatList()); }
+    if(name === 'menu') { loadCats(); loadProds(); }
+    if(name === 'tables') loadTables();
+    if(name === 'sales') loadSales();
+    if(name === 'settings') loadSettingsForm();
+    if(name === 'featured') loadFeaturedItems();
+    if(name === 'waiter') loadWaiterCalls();
+    if (name !== 'orders' && ordersSelectMode) {
+      disableOrdersSelectMode();
+    }
+    if (name !== 'sales' && salesSelectMode) {
+      disableSalesSelectMode();
+    }
+    if (name !== 'orders' && acceptedSelectMode) {
+      disableAcceptedSelectMode();
+    }
+  }
+
+  socket.emit('join:admin');
+  socket.on('order:incoming', async order => {
+    playNotif(); pendingCount++; updateBadge(); showBanner(`🔔 ${order.table_name}'dan yeni sipariş!`);
+    if (orderFilter === 'pending' || orderFilter === 'all') {
+      await loadProductsMap();
+      prependOrder(order);
+    }
+    updateTableStatus(order.table_id, true);
+  });
+  socket.on('order:accepted', () => reloadOrders());
+  socket.on('order:rejected', () => reloadOrders());
+  socket.on('menu:updated', () => { loadCats(); loadProds(); loadProductsMap(); if (document.getElementById('sec-categories').style.display !== 'none') renderCatList(); });
+  socket.on('settings:updated', s => { applyTopbar(s); loadAdminLogo(); });
+  socket.on('tab:closed', ({ tableId }) => { if (currentTabTableId == tableId) closeTabModal(); updateTableStatus(tableId, false); });
+  socket.on('featured:updated', () => { if(document.getElementById('sec-featured').style.display !== 'none') loadFeaturedItems(); });
+  socket.on('videos:updated', () => { if(document.getElementById('sec-settings').style.display !== 'none') loadSettingsForm(); });
+  socket.on('waiter:called', (newCall) => {
+    playNotif();
+    waiterCalls.unshift(newCall);
+    if (waiterCalls.length > 50) waiterCalls.pop();
+    renderWaiterCalls();
+    updateWaiterBadge();
+    if (document.getElementById('sec-waiter').style.display !== 'none') {
+      loadWaiterCalls();
+    }
+    showBanner(`🔔 ${newCall.table_name} masasından garson çağrısı!`);
+  });
+  socket.on('waiter:resolved', ({ id, tableId }) => {
+    if (document.getElementById('sec-waiter').style.display !== 'none') {
+      loadWaiterCalls();
+    } else {
+      waiterCalls = waiterCalls.filter(c => c.id !== id);
+      renderWaiterCalls();
+      updateWaiterBadge();
+    }
+    showBanner(`✅ ${tableId} nolu masanın garson çağrısı tamamlandı.`);
+  });
+
+  async function loadInitial() {
+    await loadProductsMap();
+    await loadOrders('pending');
+    loadTables();
+    fetch('/api/settings').then(r=>r.json()).then(s=>{ applyTopbar(s); localStorage.setItem('kf_settings',JSON.stringify(s)); });
+    loadFeaturedItems();
+    loadWaiterCalls();
+    loadAdminLogo();
+    await applyAdminBackground();
+    loadSales();
+  }
+
+  async function loadProds() {
+    try {
+      const res = await fetch('/api/products');
+      let prods = await res.json();
+      prods.sort((a, b) => b.id - a.id);
+      const filter = document.getElementById('prod-filter-cat').value;
+      if (filter) prods = prods.filter(p => p.category_id == filter);
+      allProductsList = prods;
+      totalProductsPages = Math.ceil(allProductsList.length / productsPerPage);
+      currentProductsPage = 1;
+      renderProductsPage();
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function renderProductsPage() {
+    const start = (currentProductsPage - 1) * productsPerPage;
+    const pageProds = allProductsList.slice(start, start + productsPerPage);
+    let html = '';
+    pageProds.forEach(p => {
+      const catName = cats.find(c => c.id === p.category_id)?.name || 'Kategori yok';
+      html += `<div class="product-row">
+        <div><img src="${p.image || 'https://placehold.co/50x50'}" style="width:50px;height:50px;object-fit:cover;border-radius:12px;" onerror="this.src='https://placehold.co/50x50'"></div>
+        <div class="flex-1"><strong>${escapeHtml(p.name)}</strong> <span class="text-brand">₺${p.price}</span><br><span class="text-xs text-muted">${catName}</span></div>
+        <div class="flex gap-2">
+          <button class="btn-modern" onclick="editProd(${p.id})"><i class="fa fa-edit"></i></button>
+          <button class="btn-modern btn-danger" onclick="deleteProd(${p.id})"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>`;
+    });
+    document.getElementById('prod-list').innerHTML = html || '<div class="text-center py-4">Ürün bulunamadı</div>';
+    totalProductsPages = Math.ceil(allProductsList.length / productsPerPage);
+    let pag = '';
+    for (let i = 1; i <= totalProductsPages; i++) {
+      pag += `<button class="page-btn ${i === currentProductsPage ? 'active' : ''}" onclick="goToProductsPage(${i})">${i}</button>`;
+    }
+    document.getElementById('products-pagination').innerHTML = pag;
+  }
+
+  function goToProductsPage(page) {
+    currentProductsPage = page;
+    renderProductsPage();
+  }
+
+  // Buton olayları
+  document.addEventListener('DOMContentLoaded', () => {
+    const enableSalesSelectBtn = document.getElementById('enableSalesSelectModeBtn');
+    const cancelSalesSelectBtn = document.getElementById('cancelSalesSelectModeBtn');
+    const selectAllSalesBtn = document.getElementById('selectAllSalesBtn');
+    const deleteSalesBtn = document.getElementById('deleteSelectedSalesBtn');
+    
+    if (enableSalesSelectBtn) enableSalesSelectBtn.addEventListener('click', enableSalesSelectMode);
+    if (cancelSalesSelectBtn) cancelSalesSelectBtn.addEventListener('click', disableSalesSelectMode);
+    if (selectAllSalesBtn) selectAllSalesBtn.addEventListener('click', () => {
+      const master = document.getElementById('masterSalesCheckbox');
+      if (master) master.checked = true;
+      masterSalesCheckboxHandler({ target: { checked: true } });
+    });
+    if (deleteSalesBtn) deleteSalesBtn.addEventListener('click', deleteSelectedSales);
+    
+    const enableSelectModeBtn = document.getElementById('enableSelectModeBtn');
+    const cancelSelectModeBtn = document.getElementById('cancelSelectModeBtn');
+    const selectAllOrdersBtn = document.getElementById('selectAllOrdersBtn');
+    const deleteOrdersBtn = document.getElementById('deleteSelectedOrdersBtn');
+    
+    if (enableSelectModeBtn) enableSelectModeBtn.addEventListener('click', enableOrdersSelectMode);
+    if (cancelSelectModeBtn) cancelSelectModeBtn.addEventListener('click', disableOrdersSelectMode);
+    if (selectAllOrdersBtn) selectAllOrdersBtn.addEventListener('click', () => {
+      const master = document.getElementById('masterOrdersCheckbox');
+      if (master) master.checked = true;
+      masterOrdersCheckboxHandler({ target: { checked: true } });
+    });
+    if (deleteOrdersBtn) deleteOrdersBtn.addEventListener('click', deleteSelectedOrders);
+    
+    const enableAcceptedBtn = document.getElementById('enableAcceptedSelectBtn');
+    const cancelAcceptedBtn = document.getElementById('cancelAcceptedSelectBtn');
+    const selectAllAcceptedBtn = document.getElementById('selectAllAcceptedBtn');
+    const deleteAcceptedBtn = document.getElementById('deleteSelectedAcceptedBtn');
+    
+    if (enableAcceptedBtn) enableAcceptedBtn.addEventListener('click', enableAcceptedSelectMode);
+    if (cancelAcceptedBtn) cancelAcceptedBtn.addEventListener('click', disableAcceptedSelectMode);
+    if (selectAllAcceptedBtn) selectAllAcceptedBtn.addEventListener('click', selectAllAccepted);
+    if (deleteAcceptedBtn) deleteAcceptedBtn.addEventListener('click', deleteSelectedAccepted);
+  });
+
+  // async function updateFeaturedTitle() { ... } (mevcut, değişmedi)
+  async function updateFeaturedTitle() {
+    const newTitle = document.getElementById('featuredTitleInput').value.trim();
+    if (!newTitle) {
+      alert('Başlık boş olamaz!');
+      return;
+    }
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured_title: newTitle })
+      });
+      if (!res.ok) throw new Error('Kaydedilemedi');
+      document.getElementById('featuredTitleDisplay').innerText = newTitle;
+      alert('Başlık güncellendi.');
+      socket.emit('settings:updated', { featured_title: newTitle });
+    } catch(e) {
+      alert('Hata: ' + e.message);
+    }
+  }
+
+  loadInitial();
+</script>
+</body>
+</html>
