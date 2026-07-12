@@ -117,14 +117,11 @@ Move-Item admin.html,kiosk.html,login.html,reset-password.html public
 ```
 
 ## 5. Install Dependencies
-Install all required packages:
+The package.json supplied may not include all required modules. To avoid Cannot find module errors, install the complete dependency set with a single command:
 ```powershell
-npm install
+npm install express socket.io multer uuid sql.js bcrypt express-rate-limit nodemailer express-session axios iyzipay stripe dotenv cors qrcode jspdf html2canvas
 ```
-
-**Main project packages include:** `express`, `socket.io`, `sql.js`, `express-session`, `bcrypt`, `multer`, `dotenv`, `cors`, `qrcode`, `nodemailer`, `jspdf`, `html2canvas`.
-
-## 6. Environment Configuration
+## 6.Check if a .env file already exists (it usually does). If not, create one:
 Create a new configuration file:
 ```powershell
 New-Item .env
