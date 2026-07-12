@@ -63,7 +63,14 @@ The application is lightweight and can be started directly with Node.js on Windo
 
 # 🚀 Installation
 
-## 1. Requirements
+## 1. Clone Repository
+```powershell
+git clone https://github.com
+cd restaurant-table-kiosk-system-main
+```
+
+
+## 2. Requirements
 
 Open your project folder in your code editor (e.g., Visual Studio Code) and ensure **Node.js v18.x or newer** is already installed on your system.
 
@@ -73,11 +80,7 @@ node -v
 npm -v
 ```
 
-## 2. Clone Repository
-```powershell
-git clone https://github.com
-cd restaurant-table-kiosk-system-main
-```
+
 
 ⚠️ Important: After cloning, you may find that the source files are inside a subfolder with the same name (restaurant-table-kiosk-system-main/restaurant-table-kiosk-system-main). If so, move into that subfolder before continuing:
 
