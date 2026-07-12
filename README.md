@@ -79,6 +79,15 @@ git clone https://github.com
 cd restaurant-table-kiosk-system-main
 ```
 
+⚠️ Important: After cloning, you may find that the source files are inside a subfolder with the same name (restaurant-table-kiosk-system-main/restaurant-table-kiosk-system-main). If so, move into that subfolder before continuing:
+
+```powershell
+cd restaurant-table-kiosk-system-main
+
+```
+
+
+
 ## 3. Create Required Folders
 Open PowerShell inside the project directory and execute the following commands to securely generate the target directories:
 ```powershell
@@ -110,13 +119,8 @@ restaurant-table-kiosk-system-main/
 └── .env
 ```
 
-## 4. Move HTML Files
-Move the core frontend files into the `public\` folder:
-```powershell
-Move-Item admin.html,kiosk.html,login.html,reset-password.html public
-```
 
-## 5. Install Dependencies
+## 4. Install Dependencies
 The package.json supplied may not include all required modules. To avoid Cannot find module errors, install the complete dependency set with a single command:
 ```powershell
 npm install express socket.io multer uuid sql.js bcrypt express-rate-limit nodemailer express-session axios iyzipay stripe dotenv cors qrcode jspdf html2canvas
@@ -151,7 +155,7 @@ If migrating from an existing setup or deployment:
 
 ## 8. Start Application
 ```powershell
-npm start
+node server.js
 ```
 
 Upon successful connection, the local terminal output will show:
