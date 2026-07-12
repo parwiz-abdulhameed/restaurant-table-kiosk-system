@@ -1,234 +1,295 @@
-# Chef istanbul  Kiosk Sistemi
+# 🍽️ Chef Istanbul Restaurant Kiosk System
 
-Taşınabilir, Docker gerektirmeyen ve tek komutla çalışabilen restoran kiosk sistemi.
+A portable, modern, and lightweight **Self-Service Restaurant Kiosk & Management System** designed to provide a complete digital ordering experience for restaurants.
 
-## Kurulum ve Çalıştırma
+The system allows customers to browse digital menus, place orders, track order status, and request assistance through restaurant kiosks, tablets, or mobile devices.
 
-Bağımlılıkları yükleyin:
+Restaurant staff can manage products, categories, tables, orders, reports, and kiosk settings through a powerful administration dashboard.
 
-```bash
+🌐 **No Internet Required:**  
+The system works completely over a local network (LAN). Kiosk devices and administrator panels communicate instantly within the restaurant environment.
+
+⚡ **No Docker Required:**  
+The application is lightweight and can be started directly with Node.js on Windows environments.
+
+---
+
+# ✨ Features
+
+## 👨‍💼 Admin Dashboard
+
+* **Product Management**
+  - Add, update, and delete products.
+  - Manage product images and descriptions.
+
+* **Category Management**
+  - Create and organize menu categories.
+
+* **Table Management**
+  - Create restaurant tables and generate kiosk links dynamically.
+
+* **Real-Time Order Tracking**
+  - Receive instant order notifications using WebSocket communication.
+
+* **Advanced Reports**
+  - View sales statistics and export performance insights.
+  - Generate PDF reports directly from the administration panel.
+
+* **Kiosk Customization**
+  - Upload restaurant branding / logo.
+  - Change dynamic background images and loop videos.
+
+* **Secure Authentication**
+  - User login system.
+  - Secure password reset functionality.
+
+---
+
+# 🖥️ Kiosk System
+
+* Interactive digital menu with fluid navigation.
+* Product images and detailed descriptions.
+* Instant ordering processed through the local network.
+* Real-time order status tracking for customers.
+* One-click "Call Waiter" assistance button.
+* Support for QR payment simulation and integrated external payment system setups.
+* Fully responsive interface optimized for:
+  - Dedicated restaurant kiosks
+  - Touch screen monitors
+  - Tablets
+  - Mobile smartphones
+
+---
+
+# 🚀 Installation
+
+## 1. Requirements
+
+Open your project folder in your code editor (e.g., Visual Studio Code) and ensure **Node.js v18.x or newer** is already installed on your system.
+
+Verify your development environment by running the following commands directly inside the editor terminal (PowerShell):
+```powershell
+node -v
+npm -v
+```
+
+## 2. Clone Repository
+```powershell
+git clone https://github.com
+cd restaurant-kiosk-system
+```
+
+## 3. Create Required Folders
+Open PowerShell inside the project directory and execute the following commands to securely generate the target directories:
+```powershell
+mkdir public -Force
+mkdir public\img -Force
+mkdir public\videos -Force
+mkdir public\sounds -Force
+mkdir data -Force
+```
+
+The proper project structure must look like this:
+```text
+restaurant-kiosk-system/
+│
+├── public/
+│   ├── admin.html
+│   ├── kiosk.html
+│   ├── login.html
+│   ├── reset-password.html
+│   ├── img/
+│   ├── videos/
+│   └── sounds/
+│
+├── data/
+│   └── kiosk.db (created automatically on first run)
+│
+├── server.js
+├── package.json
+└── .env
+```
+
+## 4. Move HTML Files
+Move the core frontend files into the `public\` folder:
+```powershell
+Move-Item admin.html,kiosk.html,login.html,reset-password.html public
+```
+
+## 5. Install Dependencies
+Install all required packages:
+```powershell
 npm install
 ```
 
-Sunucuyu başlatın:
+**Main project packages include:** `express`, `socket.io`, `sql.js`, `express-session`, `bcrypt`, `multer`, `dotenv`, `cors`, `qrcode`, `nodemailer`, `jspdf`, `html2canvas`.
 
-```bash
-npm start
+## 6. Environment Configuration
+Create a new configuration file:
+```powershell
+New-Item .env
 ```
 
-Tarayıcıda açın:
-
-* Admin / Kasa Paneli: `http://localhost:3000/admin`
-* Kiosk (Örnek Masa): `http://localhost:3000/kiosk/teras-1-1781281075372`
-
----
-
-## Varsayılan Admin Bilgileri
-
-| Kullanıcı Adı | Şifre    |
-| ------------- | -------- |
-| admin         | admin123 |
-
-İlk çalıştırmada varsayılan yönetici hesabı otomatik olarak oluşturulur.
-
----
-
-## Özellikler
-
-### Admin Paneli
-
-* Gerçek zamanlı sipariş takibi ve sesli bildirim desteği
-* Kategori yönetimi
-* Menü ve ürün yönetimi
-* Masa yönetimi ve kiosk bağlantıları oluşturma
-* Satış, ciro ve kâr raporları
-* PDF rapor oluşturma
-* Kiosk arayüzü özelleştirme
-* Site ve giriş sayfası tasarım ayarları
-
-### Kiosk Ekranı
-
-* Ürün ve kategori görüntüleme
-* Anlık sipariş gönderme
-* Sipariş takibi
-* **Garson Çağır** özelliği
-* QR kod, temassız kart ve nakit ödeme seçenekleri
-* Temassız ödeme desteği
-
----
-
-## Aynı Ağ Üzerinden Kullanım
-
-Sunucunun IP adresini öğrenin (örnek: 192.168.1.100).
-
-Kiosk cihazında:
-
-```text
-http://192.168.1.100:3000/kiosk/masa-1-...
-```
-
-Admin cihazında:
-
-```text
-http://192.168.1.100:3000/admin
-```
-
----
-
-## Veri Konumu
-
-Tüm veriler aşağıdaki dosyada saklanır:
-
-```text
-data/kiosk.db
-```
-
-Başka bir bilgisayara taşırken bu dosyayı da kopyalamanız gerekir.
-
-### Yüklenen Görseller
-
-```text
-public/img/
-```
-
-### Yüklenen Videolar
-
-```text
-public/videos/
-```
-
-Proje taşınırken bu klasörlerin de kopyalanması gerekir.
-
----
-
-## Şifre Sıfırlama (E-posta ile)
-
-### Gmail Uygulama Şifresi
-
-Google Hesabı → Güvenlik → 2 Adımlı Doğrulama → Uygulama Şifreleri
-
-### .env Ayarları
-
+Open the `.env` file and insert the following environment variables:
 ```env
-SMTP_HOST=smtp.gmail.com
+PORT=3000
+PAYMENT_PROVIDER=simulation
+
+SMTP_HOST=://gmail.com
 SMTP_PORT=587
-SMTP_USER=mailadresiniz@gmail.com
-SMTP_PASS=16_haneli_sifre
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_application_password
 SMTP_SECURE=false
 ```
 
-Sunucuyu başlatın:
+## 7. Restore Existing Data (Optional)
+If migrating from an existing setup or deployment:
+* Copy your existing database file `kiosk.db` directly into the `data\` folder.
+* Copy your media assets into their respective folders:
+  - `public\img\`
+  - `public\videos\`
+  - `public\sounds\`
 
-```bash
+> ⚠️ **Important:** The SQLite database stores relative file paths only. All product images, loops, and notification sounds must exist physically inside the targeted folders inside `public\` to prevent layout breakage.
+
+## 8. Start Application
+```powershell
 npm start
 ```
 
-Şifre sıfırlama sayfası:
-
+Upon successful connection, the local terminal output will show:
 ```text
-http://localhost:3000/login
+Chef İstanbul — Ready!
+http://localhost:3000
 ```
+
+🌐 **Access Pages locally via:**
+* **Admin Panel:** `http://localhost:3000/admin`
+* **Login Gateway:** `http://localhost:3000/login`
+* **Kiosk Example (Table 1):** `http://localhost:3000/kiosk/table-1`  
+  *(Note: The table slug identifier changes automatically depending on the specific tables created inside the Admin Panel.)*
 
 ---
 
-## Ödeme Sistemleri
+## 🔐 Default Admin Account
+The system automatically creates a default administrator account on the first installation run. Please change the password after the first login.
 
-`.env` dosyasından ödeme sağlayıcısı seçilebilir:
-
-```env
-PAYMENT_PROVIDER=simulation
-```
-
-Desteklenen ödeme sistemleri:
-
-* Simulation
-* Stripe
-* İyzico
-* PayTR
-
-### Stripe
-
-```env
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-### İyzico
-
-```env
-IYZICO_API_KEY=...
-IYZICO_SECRET_KEY=...
-IYZICO_BASE_URL=https://sandbox-api.iyzipay.com
-```
-
-### PayTR
-
-```env
-PAYTR_MERCHANT_ID=...
-PAYTR_MERCHANT_KEY=...
-PAYTR_MERCHANT_SALT=...
-PAYTR_BASE_URL=https://www.paytr.com
-```
+| Username | Password |
+| :--- | :--- |
+| **admin** | **admin123** |
 
 ---
 
-## Başlatma
+## 🛠️ Technologies
 
-Proje klasöründe bulunan **BASLAT.bat** dosyasına çift tıklayarak sistemi başlatabilirsiniz.
-
-Bu dosya:
-
-* Sunucuyu otomatik olarak başlatır.
-* Gerekli servisleri çalıştırır.
-* Admin panelini varsayılan tarayıcıda açar.
-
-Alternatif olarak terminal üzerinden:
-
-```bash
-npm start
-```
-
-komutu ile de proje başlatılabilir.
-
----
-
-## Kullanılan Teknolojiler
-
+### Backend
 * Node.js
 * Express.js
-* SQLite (sql.js)
 * Socket.io
-* express-session
+* SQLite (`sql.js`)
 * bcrypt
 * multer
-* html2canvas
-* jsPDF
-* qrcodejs
+
+### Frontend
+* HTML5
+* CSS3
+* JavaScript ES6+
 
 ---
 
-## Temel Özellikler
+## 🌐 LAN Usage
+The application operates autonomously without external internet dependencies. Ensure all physical terminal hardware endpoints connect to the exact same Wi-Fi access point or local subnet.
 
-* Gerçek zamanlı sipariş yönetimi
-* Kategori ve ürün yönetimi
-* Masa bazlı kiosk sistemi
-* Garson Çağır modülü
-* Sipariş takip sistemi
-* QR kod, temassız kart ve nakit ödeme seçenekleri
-* Satış, ciro ve kâr analizi
-* PDF rapor oluşturma
-* Görsel ve video özelleştirme
-* E-posta ile şifre sıfırlama
-* Stripe, İyzico ve PayTR ödeme entegrasyonları
+* **Example Host Server IP:** `192.168.1.100`
+* **Customer Kiosk URL:** `http://192.168.1`
+* **Staff Admin URL:** `http://192.168.1`
 
 ---
 
-## Lisans
+## 💳 Payment Systems
+Switch payment gateways smoothly through the `PAYMENT_PROVIDER` identifier inside your `.env` configuration file. 
 
-MIT
+Available modules:
+* `simulation` (Local sandbox development mode)
+* `stripe`
+* `iyzico`
+* `paytr`
 
 ---
 
-## Geliştirici
+## 🧩 Development Notes
 
-**Developed by Parwiz Abdulhameed**
+During development, some dependency and environment-related issues may occur depending on the Windows configuration.
+
+### Node.js and npm Issues
+If package installation fails, remove existing dependencies and reinstall using PowerShell:
+```powershell
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+npm install
+```
+
+### Missing Packages
+If a required package is missing, install dependencies again:
+```powershell
+npm install
+```
+
+Main dependencies used in this project: `express`, `socket.io`, `sql.js`, `express-session`, `bcrypt`, `multer`, `dotenv`, `cors`, `qrcode`, `nodemailer`, `jspdf`, `html2canvas`.
+
+### Windows Environment
+The project was developed and tested on Windows environments using Node.js. 
+
+Ensure:
+* Node.js v18+ is installed.
+* `npm` is available and mapped in your PowerShell environment variables.
+* The application is executed directly from the project root directory.
+
+---
+
+## 📋 Troubleshooting
+
+#### ❗ Missing `node_modules`
+**Solution:** A fresh dependencies installation request is required. Run:
+```powershell
+npm install
+```
+
+#### ❗ `ERR_CONNECTION_REFUSED`
+**Solution:** The core local backend node process isn't running. Start the application engine inside the proper root directory via:
+```powershell
+npm start
+```
+
+#### ❗ Images / Asset Files Not Showing
+**Solution:** Verify the actual image assets are inside `public\img\` and check whether the database file paths perfectly match the physical filenames on disk (pay close attention to case sensitivity and standard naming rules).
+
+#### ❗ 404 Route Errors
+**Solution:** Make sure your static assets are grouped inside the public space. Double-check that these entry files exist:
+* `public\admin.html`
+* `public\kiosk.html`
+* `public\login.html`
+
+---
+
+## ⚡ Quick Start Summary (PowerShell)
+```powershell
+mkdir public -Force
+mkdir public\img -Force
+mkdir public\videos -Force
+mkdir public\sounds -Force
+mkdir data -Force
+
+Move-Item admin.html,kiosk.html,login.html,reset-password.html public
+
+npm install
+npm start
+```
+
+---
+
+## 📄 License
+This project is open-source software licensed under the **MIT License**.
+
+## 👨‍💻 Developer
+Developed by **Parwiz Abdulhameed**
