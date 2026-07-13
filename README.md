@@ -2,7 +2,8 @@
 # 🍽️ Restaurant Table Kiosk System
 
 
-![Admin updates order statuses, customer tracks live without refresh, and checks bill from top-right](restaurant-table-kiosk-system/Pi7_Gif%20(1).gif)
+![Uploading b1.1 (1).gif…]()
+
 
 
 A portable, modern, and lightweight **Self-Service Restaurant Kiosk & Management System** designed to provide a complete digital ordering experience for restaurants.
