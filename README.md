@@ -1,13 +1,5 @@
 # 🍽️ Restaurant Table Kiosk System
 
-![Admin changes order statuses, customer tracks live without refresh, and checks bill from top-right](Pi7_Gif (1).gif)
-
-*This demo highlights the seamless real-time communication between the kiosk and the admin panel:*
-
-- 👨‍💼 **Admin Panel:** Instantly receive new orders, update their status step-by-step (*Received → Preparing → Ready to Serve*), and finalize the payment process.
-- 🖥️ **Customer Kiosk:** Track every status change **live** – the screen updates instantly without the customer needing to refresh the page.
-- 🧾 **Bill Preview:** Customers can easily access and review their complete order summary and total amount from the **top-right corner** of the kiosk at any time.
-
 A portable, modern, and lightweight **Self-Service Restaurant Kiosk & Management System** designed to provide a complete digital ordering experience for restaurants.
 
 The system allows customers to browse digital menus, place orders, track order status, and request assistance through restaurant kiosks, tablets, or mobile devices.
