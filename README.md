@@ -1,6 +1,6 @@
 # 🍽️ Restaurant Table Kiosk System
 
-![Admin changes order statuses, customer tracks live without refresh, and checks bill from top-right](restaurant-table-kiosk-system/Pi7_Gif%20(1).gif)
+![Admin changes order statuses, customer tracks live without refresh, and checks bill from top-right](Pi7_Gif (1).gif)
 
 *This demo highlights the seamless real-time communication between the kiosk and the admin panel:*
 
