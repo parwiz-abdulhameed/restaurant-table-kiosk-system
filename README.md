@@ -2,7 +2,8 @@
 # 🍽️ Restaurant Table Kiosk System
 
 
-<img width="400" height="225" alt="Image" src="https://github.com/user-attachments/assets/5b8a1bb1-de3d-4733-b076-1694aa0b7834" />
+<img src="https://github.com/user-attachments/assets/5b8a1bb1-de3d-4733-b076-1694aa0b7834" width="100%" alt="Kiosk Proje Önizleme">
+
 
 
 
