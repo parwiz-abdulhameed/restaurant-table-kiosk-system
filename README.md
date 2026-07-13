@@ -2,7 +2,8 @@
 # 🍽️ Restaurant Table Kiosk System
 
 
-<img width="800" height="450" alt="Pi7_Gif (1)" src="https://github.com/user-attachments/assets/5f63f2e8-0481-43f9-8f4f-e0676270e9a6" />
+<img width="800" height="450" alt="Pi7_Gif (1)" src="https://github.com/user-attachments/assets/d70bc389-37b6-4a96-a42e-ccc9fec0ad11" />
+
 
 
 
